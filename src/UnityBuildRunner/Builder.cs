@@ -63,10 +63,13 @@ namespace UnityBuildRunner
                     while (!p.HasExited)
                     {
                         ConsoleOut(reader);
-                        if (errorFilter.Contains(reader.ToString()))
+                        foreach (var error in errorFilter)
                         {
-                            p.Kill();
-                            throw new OperationCanceledException(reader.ToString());
+                            if (Regex.IsMatch(reader.ToString(), error, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                            {
+                                p.Kill();
+                                throw new OperationCanceledException(reader.ToString());
+                            }
                         }
                         await Task.Delay(TimeSpan.FromMilliseconds(500));
                     }
