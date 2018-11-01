@@ -15,6 +15,11 @@ namespace UnityBuildRunner
         public string[] Args { get; }
         public string ArgumentString { get; }
 
+        private readonly string[] errorFilter = new[]
+        {
+            "Error building Player because scripts had compiler errors",
+        };
+
         public Builder(string unityPath, string[] args)
         {
             UnityPath = unityPath;
@@ -25,12 +30,15 @@ namespace UnityBuildRunner
         public async Task<int> BuildAsync()
         {
             // validate
-            if (UnityPath == null) throw new ArgumentException("Missing environment variable `UnityPath`.");
-            if (!File.Exists(UnityPath)) throw new FileNotFoundException("Can not find `UnityPath` environment variable...");
+            if (UnityPath == null)
+                throw new ArgumentException("Missing environment variable `UnityPath`.");
+            if (!File.Exists(UnityPath))
+                throw new FileNotFoundException("Can not find `UnityPath` environment variable...");
 
             // Logfile
             var logFile = GetLogFile();
-            if (string.IsNullOrEmpty(logFile)) throw new ArgumentException("Missing '-logFile filename' argument. Make sure you have target any build file path.");
+            if (string.IsNullOrEmpty(logFile))
+                throw new ArgumentException("Missing '-logFile filename' argument. Make sure you have target any build file path.");
 
             // Initialize
             Console.WriteLine($"Detected LogFile: {logFile}");
@@ -46,7 +54,8 @@ namespace UnityBuildRunner
                 {
                     await Task.Delay(TimeSpan.FromMilliseconds(10));
                 }
-                if (p.HasExited) return p.ExitCode;
+                if (p.HasExited)
+                    return p.ExitCode;
 
                 using (var file = File.Open(logFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 using (var reader = new StreamReader(file))
@@ -54,6 +63,11 @@ namespace UnityBuildRunner
                     while (!p.HasExited)
                     {
                         ConsoleOut(reader);
+                        if (errorFilter.Contains(reader.ToString()))
+                        {
+                            p.Kill();
+                            throw new OperationCanceledException(reader.ToString());
+                        }
                         await Task.Delay(TimeSpan.FromMilliseconds(500));
                     }
 
@@ -70,7 +84,8 @@ namespace UnityBuildRunner
 
         public async Task InitializeAsync(string path)
         {
-            if (!File.Exists(path)) return;
+            if (!File.Exists(path))
+                return;
             for (int i = 0; i < 10; i++)
             {
                 try
@@ -90,7 +105,8 @@ namespace UnityBuildRunner
         public void ConsoleOut(StreamReader stream)
         {
             var txt = stream.ReadToEnd();
-            if (string.IsNullOrEmpty(txt)) return;
+            if (string.IsNullOrEmpty(txt))
+                return;
             Console.Write(txt);
         }
 
