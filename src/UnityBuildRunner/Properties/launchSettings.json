@@ -2,7 +2,7 @@
   "profiles": {
     "UnityBuildRunner": {
       "commandName": "Project",
-      "commandLineArgs": "-quit -batchmode -buildTarget WindowsStoreApps -projectPath C:\\workspace\\Source\\Repos\\MRTKSample\\Unity -logfile log.log -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN",
+      "commandLineArgs": "-quit -batchmode -buildTarget WindowsStoreApps -projectPath C:\\workspace\\Source\\Repos\\NS-Holojector\\Nextscape.Holojector.Unity -logfile log.log -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN",
       "environmentVariables": {
         "UnityPath": "C:\\Program Files\\UnityApplications\\2017.2.2p2\\Editor\\Unity.exe"
       }
