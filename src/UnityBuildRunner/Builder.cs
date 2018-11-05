@@ -11,14 +11,18 @@ namespace UnityBuildRunner
 {
     public class Builder : IBuilder
     {
+        private static readonly RegexOptions regexOptions = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline;
+        private static readonly string[] errorFilter = new[]
+        {
+            "DisplayProgressNotification: Build Failed",
+            "Error building Player because scripts had compiler errors",
+        };
+
         public string UnityPath { get; }
         public string[] Args { get; }
         public string ArgumentString { get; }
 
-        private readonly string[] errorFilter = new[]
-        {
-            "Error building Player because scripts had compiler errors",
-        };
+        public Builder() { }
 
         public Builder(string unityPath, string[] args)
         {
@@ -57,29 +61,36 @@ namespace UnityBuildRunner
                 if (p.HasExited)
                     return p.ExitCode;
 
-                using (var file = File.Open(logFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                using (var reader = new StreamReader(file))
+                try
                 {
-                    while (!p.HasExited)
+                    using (var file = File.Open(logFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    using (var reader = new StreamReader(file))
                     {
-                        ConsoleOut(reader);
-                        foreach (var error in errorFilter)
+                        var txt = reader.ReadToEnd();
+                        while (!p.HasExited)
                         {
-                            if (Regex.IsMatch(reader.ToString(), error, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline))
-                            {
-                                p.Kill();
-                                throw new OperationCanceledException(reader.ToString());
-                            }
+                            ConsoleOut(txt);
+                            ErrorFilter(txt);
+                            await Task.Delay(TimeSpan.FromMilliseconds(500));
                         }
-                        await Task.Delay(TimeSpan.FromMilliseconds(500));
-                    }
 
-                    await Task.Delay(TimeSpan.FromMilliseconds(500));
-                    ConsoleOut(reader);
+                        await Task.Delay(TimeSpan.FromMilliseconds(500));
+                        ConsoleOut(txt);
+                        ErrorFilter(txt);
+                    }
                 }
+                catch (Exception)
+                {
+                    p.Kill();
+                }
+
                 if (p.ExitCode == 0)
                 {
                     Console.WriteLine("Unity Build finished : Success.");
+                }
+                else
+                {
+                    Console.WriteLine("Unity Build finished : Error happens.");
                 }
                 return p.ExitCode;
             }
@@ -105,12 +116,22 @@ namespace UnityBuildRunner
             }
         }
 
-        public void ConsoleOut(StreamReader stream)
+        private void ConsoleOut(string txt)
         {
-            var txt = stream.ReadToEnd();
             if (string.IsNullOrEmpty(txt))
                 return;
             Console.Write(txt);
+        }
+
+        public void ErrorFilter(string txt)
+        {
+            foreach (var error in errorFilter)
+            {
+                if (Regex.IsMatch(txt, error, regexOptions))
+                {
+                    throw new OperationCanceledException($"Build Error for error : {error}");
+                }
+            }
         }
 
         public string GetLogFile()

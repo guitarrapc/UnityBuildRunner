@@ -10,7 +10,7 @@ namespace UnityBuildRunner
         string UnityPath { get; }
 
         Task<int> BuildAsync();
-        void ConsoleOut(StreamReader stream);
+        void ErrorFilter(string txt);
         string GetLogFile();
         Task InitializeAsync(string path);
     }
