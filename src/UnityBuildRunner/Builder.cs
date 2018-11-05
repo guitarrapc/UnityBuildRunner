@@ -65,7 +65,7 @@ namespace UnityBuildRunner
                         ConsoleOut(reader);
                         foreach (var error in errorFilter)
                         {
-                            if (Regex.IsMatch(reader.ToString(), error, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                            if (Regex.IsMatch(reader.ToString(), error, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline))
                             {
                                 p.Kill();
                                 throw new OperationCanceledException(reader.ToString());
@@ -89,7 +89,7 @@ namespace UnityBuildRunner
         {
             if (!File.Exists(path))
                 return;
-            for (int i = 0; i < 10; i++)
+            for (var i = 0; i < 10; i++)
             {
                 try
                 {
