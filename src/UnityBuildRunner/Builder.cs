@@ -66,17 +66,14 @@ namespace UnityBuildRunner
                     using (var file = File.Open(logFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     using (var reader = new StreamReader(file))
                     {
-                        var txt = reader.ReadToEnd();
                         while (!p.HasExited)
                         {
-                            ConsoleOut(txt);
-                            ErrorFilter(txt);
+                            ConsoleOut(reader);
                             await Task.Delay(TimeSpan.FromMilliseconds(500));
                         }
 
                         await Task.Delay(TimeSpan.FromMilliseconds(500));
-                        ConsoleOut(txt);
-                        ErrorFilter(txt);
+                        ConsoleOut(reader);
                     }
                 }
                 catch (Exception)
@@ -116,11 +113,13 @@ namespace UnityBuildRunner
             }
         }
 
-        private void ConsoleOut(string txt)
+        private void ConsoleOut(StreamReader reader)
         {
+            var txt = reader.ReadToEnd();
             if (string.IsNullOrEmpty(txt))
                 return;
             Console.Write(txt);
+            ErrorFilter(txt);
         }
 
         public void ErrorFilter(string txt)
