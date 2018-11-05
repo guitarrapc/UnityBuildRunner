@@ -14,6 +14,7 @@ namespace UnityBuildRunner
         private static readonly RegexOptions regexOptions = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline;
         private static readonly string[] errorFilter = new[]
         {
+            "compilationhadfailure: True",
             "DisplayProgressNotification: Build Failed",
             "Error building Player because scripts had compiler errors",
         };
