@@ -77,9 +77,10 @@ namespace UnityBuildRunner
                         ConsoleOut(reader);
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     p.Kill();
+                    Console.WriteLine(ex);
                 }
 
                 if (p.ExitCode == 0)
