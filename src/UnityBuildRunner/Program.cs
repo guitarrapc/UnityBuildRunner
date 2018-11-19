@@ -9,13 +9,19 @@ namespace UnityBuildRunner
             try
             {
                 Console.WriteLine("Unity Build Begin.");
-                var unity = Environment.GetEnvironmentVariable("UnityPath");
+                // option handling
+                IOptions options = new Options();
+                var (unity, errorcode) = options.GetUnityPath(args);
+                if (errorcode != 0)
+                    return errorcode;
+
+                // builder
                 IBuilder builder = new Builder(unity, args);
                 return builder.BuildAsync().GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"{ex.GetType().FullName} {ex.Message} {ex.StackTrace}");
+                Console.Error.WriteLine($@"{ex.Message}({ex.GetType().FullName}){Environment.NewLine}{ex.StackTrace}");
                 return 1;
             }
         }
