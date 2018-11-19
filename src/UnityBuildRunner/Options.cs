@@ -8,12 +8,25 @@ namespace UnityBuildRunner
 {
     public interface IOptions
     {
-        (string unityPath, int exitcode) GetUnityPath(string[] args);
+        string GetUnityPath(string[] args);
+        (string unityPath, int exitcode) GetUnityPathArgs(string[] args);
+        string GetUnityPathEnv();
     }
 
     public class Options : IOptions
     {
-        public (string unityPath, int exitcode) GetUnityPath(string[] args)
+        public string GetUnityPath(string[] args)
+        {
+            var (unityPath, exitcode) = GetUnityPathArgs(args);
+            // Failover to environment variables
+            if (string.IsNullOrWhiteSpace(unityPath))
+            {
+                return GetUnityPathEnv();
+            }
+            return unityPath;
+        }
+
+        public (string unityPath, int exitcode) GetUnityPathArgs(string[] args)
         {
             // Option Handling
             var unity = "";
@@ -39,13 +52,13 @@ namespace UnityBuildRunner
                 return (e.Message, 1);
             }
 
-            // Failover to environment variables
-            if (string.IsNullOrWhiteSpace(unity))
-            {
-                unity = Environment.GetEnvironmentVariable("UnityPath");
-            }
-
             return (unity, 0);
+        }
+
+        public string GetUnityPathEnv()
+        {
+            var unity = Environment.GetEnvironmentVariable("UnityPath") ?? "";
+            return unity;
         }
     }
 }

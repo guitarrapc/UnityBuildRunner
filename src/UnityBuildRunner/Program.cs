@@ -11,9 +11,7 @@ namespace UnityBuildRunner
                 Console.WriteLine("Unity Build Begin.");
                 // option handling
                 IOptions options = new Options();
-                var (unity, errorcode) = options.GetUnityPath(args);
-                if (errorcode != 0)
-                    return errorcode;
+                var unity = options.GetUnityPath(args);
 
                 // builder
                 IBuilder builder = new Builder(unity, args);
