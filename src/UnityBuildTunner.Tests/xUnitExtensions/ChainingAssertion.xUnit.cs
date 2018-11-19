@@ -36,7 +36,7 @@ namespace UnityBuildTunner.Tests
             var condition = predicate.Compile().Invoke(value);
 
             var paramName = predicate.Parameters.First().Name;
-            string msg = "";
+            var msg = "";
             try
             {
                 var dumper = new ExpressionDumper<T>(value, predicate.Parameters.Single());
@@ -236,10 +236,13 @@ namespace UnityBuildTunner.Tests
         public static void IsStructuralEqual(this object actual, object expected, string message = "")
         {
             message = (string.IsNullOrEmpty(message) ? "" : ", " + message);
-            if (object.ReferenceEquals(actual, expected)) return;
+            if (object.ReferenceEquals(actual, expected))
+                return;
 
-            if (actual == null) throw new ArgumentNullException(nameof(actual), $"{nameof(actual)} is null{message}");
-            if (expected == null) throw new ArgumentNullException(nameof(expected), $"{nameof(expected)} is null{message}");
+            if (actual == null)
+                throw new ArgumentNullException(nameof(actual), $"{nameof(actual)} is null{message}");
+            if (expected == null)
+                throw new ArgumentNullException(nameof(expected), $"{nameof(expected)} is null{message}");
             if (actual.GetType() != expected.GetType())
             {
                 var msg = string.Format("expected type is {0} but actual type is {1}{2}",
@@ -260,10 +263,14 @@ namespace UnityBuildTunner.Tests
         public static void IsNotStructuralEqual(this object actual, object expected, string message = "")
         {
             message = (string.IsNullOrEmpty(message) ? "" : ", " + message);
-            if (object.ReferenceEquals(actual, expected)) throw new XunitException("actual is same reference" + message); ;
+            if (object.ReferenceEquals(actual, expected))
+                throw new XunitException("actual is same reference" + message);
+            ;
 
-            if (actual == null) return;
-            if (expected == null) return;
+            if (actual == null)
+                return;
+            if (expected == null)
+                return;
             if (actual.GetType() != expected.GetType())
             {
                 return;
@@ -292,8 +299,10 @@ namespace UnityBuildTunner.Tests
                         object rValue = null;
                         var lMove = le.MoveNext();
                         var rMove = re.MoveNext();
-                        if (lMove) lValue = le.Current;
-                        if (rMove) rValue = re.Current;
+                        if (lMove)
+                            lValue = le.Current;
+                        if (rMove)
+                            rValue = re.Current;
 
                         if (lMove && rMove)
                         {
@@ -308,7 +317,8 @@ namespace UnityBuildTunner.Tests
                         {
                             return new EqualInfo { IsEquals = false, Left = lValue, Right = rValue, Names = names.Concat(new[] { "[" + index + "]" }) };
                         }
-                        if (lMove == false && rMove == false) break;
+                        if (lMove == false && rMove == false)
+                            break;
                         index++;
                     }
                 }
@@ -319,11 +329,14 @@ namespace UnityBuildTunner.Tests
         static EqualInfo StructuralEqual(object left, object right, IEnumerable<string> names)
         {
             // type and basic checks
-            if (object.ReferenceEquals(left, right)) return new EqualInfo { IsEquals = true, Left = left, Right = right, Names = names };
-            if (left == null || right == null) return new EqualInfo { IsEquals = false, Left = left, Right = right, Names = names };
+            if (object.ReferenceEquals(left, right))
+                return new EqualInfo { IsEquals = true, Left = left, Right = right, Names = names };
+            if (left == null || right == null)
+                return new EqualInfo { IsEquals = false, Left = left, Right = right, Names = names };
             var lType = left.GetType();
             var rType = right.GetType();
-            if (lType != rType) return new EqualInfo { IsEquals = false, Left = left, Right = right, Names = names };
+            if (lType != rType)
+                return new EqualInfo { IsEquals = false, Left = left, Right = right, Names = names };
 
             var type = left.GetType();
 
@@ -433,7 +446,8 @@ namespace UnityBuildTunner.Tests
             public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
             {
                 var csharpBinder = binder.GetType().GetInterface("Microsoft.CSharp.RuntimeBinder.ICSharpInvokeOrInvokeMemberBinder");
-                if (csharpBinder == null) throw new ArgumentException("is not csharp code");
+                if (csharpBinder == null)
+                    throw new ArgumentException("is not csharp code");
 
                 var typeArgs = (csharpBinder.GetProperty("TypeArguments").GetValue(binder, null) as IList<Type>).ToArray();
                 var parameterTypes = (binder.GetType().GetField("Cache", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(binder) as Dictionary<Type, object>)
@@ -464,7 +478,8 @@ namespace UnityBuildTunner.Tests
                 var nameMatched = typeof(T).GetMethods(TransparentFlags)
                     .Where(mi => mi.Name == methodName)
                     .ToArray();
-                if (!nameMatched.Any()) throw new ArgumentException(string.Format("\"{0}\" not found : Type <{1}>", methodName, typeof(T).Name));
+                if (!nameMatched.Any())
+                    throw new ArgumentException(string.Format("\"{0}\" not found : Type <{1}>", methodName, typeof(T).Name));
 
                 // type inference
                 var typedMethods = nameMatched
@@ -493,7 +508,8 @@ namespace UnityBuildTunner.Tests
                             var typeParams = genericArguments
                                 .GroupJoin(parameterGenericTypes, x => x, x => x.Key, (_, Args) => Args)
                                 .ToArray();
-                            if (!typeParams.All(xs => xs.Any())) return null; // types short
+                            if (!typeParams.All(xs => xs.Any()))
+                                return null; // types short
 
                             return new
                             {
@@ -505,7 +521,8 @@ namespace UnityBuildTunner.Tests
                         }
                         else
                         {
-                            if (genericArguments.Length != typeArgs.Length) return null;
+                            if (genericArguments.Length != typeArgs.Length)
+                                return null;
 
                             return new
                             {
@@ -527,11 +544,13 @@ namespace UnityBuildTunner.Tests
                     )
                     .ToArray();
 
-                if (!typedMethods.Any()) throw new ArgumentException(string.Format("\"{0}\" not match arguments : Type <{1}>", methodName, typeof(T).Name));
+                if (!typedMethods.Any())
+                    throw new ArgumentException(string.Format("\"{0}\" not match arguments : Type <{1}>", methodName, typeof(T).Name));
 
                 // nongeneric
                 var nongeneric = typedMethods.Where(a => a.TypeParameters == null).ToArray();
-                if (nongeneric.Length == 1) return nongeneric[0].MethodInfo;
+                if (nongeneric.Length == 1)
+                    return nongeneric[0].MethodInfo;
 
                 // generic--
                 var lessGeneric = typedMethods
@@ -543,7 +562,8 @@ namespace UnityBuildTunner.Tests
                     ? typedMethods[0]
                     : (lessGeneric.Length == 1 ? lessGeneric[0] : null);
 
-                if (generic != null) return generic.MethodInfo.MakeGenericMethod(generic.TypeParameters.Select(kvp => kvp.Value).ToArray());
+                if (generic != null)
+                    return generic.MethodInfo.MakeGenericMethod(generic.TypeParameters.Select(kvp => kvp.Value).ToArray());
 
                 // ambiguous
                 throw new ArgumentException(string.Format("\"{0}\" ambiguous arguments : Type <{1}>", methodName, typeof(T).Name));

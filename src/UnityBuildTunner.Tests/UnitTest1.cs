@@ -15,6 +15,52 @@ namespace UnityBuildTunner.Tests
         }
 
         [Theory]
+        [InlineData(
+            @"-u C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe",
+            @"-u=C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe",
+            @"-unityPath C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe",
+            @"-unityPath=C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe",
+            @"--unityPath C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe",
+            @"--unityPath=C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe")]
+        public void IsArgumentValid(params string[] args)
+        {
+            IOptions options = new Options();
+            var (unity, errorcode) = options.GetUnityPathArgs(args);
+            errorcode.Is(0);
+            unity.Is(@"C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe");
+
+            var unity2 = options.GetUnityPath(args);
+            unity2.Is(@"C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe");
+        }
+
+        [Theory]
+        [InlineData(@"-h", @"-help", @"--help")]
+        public void IsArgumentInvalid(params string[] args)
+        {
+            IOptions options = new Options();
+            var (unity, errorcode) = options.GetUnityPathArgs(args);
+            errorcode.Is(1);
+            unity.Is("");
+
+            var unity2 = options.GetUnityPath(args);
+            unity2.Is("");
+        }
+
+        [Theory]
+        [InlineData("-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", "-logfile", "build.log")]
+        [InlineData("-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite")]
+        public void IsArgumentSkipped(params string[] args)
+        {
+            IOptions options = new Options();
+            var (unity, errorcode) = options.GetUnityPathArgs(args);
+            errorcode.Is(0);
+            unity.Is("");
+
+            var unity2 = options.GetUnityPath(args);
+            unity2.Is("");
+        }
+
+        [Theory]
         [InlineData("UnityPath", @"C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe")]
         [InlineData("UnityPath", @"C:\Program Files\UnityApplications\2017.2.2p2\Editor\Unity.exe")]
         public void IsEnvironmentVariableExists(string envName, string unityPath)
@@ -22,8 +68,35 @@ namespace UnityBuildTunner.Tests
             Environment.SetEnvironmentVariable(envName, unityPath, EnvironmentVariableTarget.Process);
             Environment.GetEnvironmentVariable(envName).IsNotNull();
             Environment.GetEnvironmentVariable($"{envName}{Guid.NewGuid()}").IsNull();
+
+            IOptions options = new Options();
+            var unity = options.GetUnityPathEnv();
+            unity.Is(unity);
+
+            var unity2 = options.GetUnityPath(Array.Empty<string>());
+            unity2.Is(unityPath);
+
+            Environment.SetEnvironmentVariable(envName, null, EnvironmentVariableTarget.Process);
         }
 
+        [Theory]
+        [InlineData("hoge", @"C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe")]
+        [InlineData("fuga", @"C:\Program Files\UnityApplications\2017.2.2p2\Editor\Unity.exe")]
+        public void IsEnvironmentVariableNotExists(string envName, string unityPath)
+        {
+            Environment.SetEnvironmentVariable(envName, unityPath, EnvironmentVariableTarget.Process);
+            Environment.GetEnvironmentVariable(envName).IsNotNull();
+            Environment.GetEnvironmentVariable($"{envName}{Guid.NewGuid()}").IsNull();
+
+            IOptions options = new Options();
+            var unity = options.GetUnityPathEnv();
+            unity.Is("");
+
+            var unity2 = options.GetUnityPath(Array.Empty<string>());
+            unity2.Is("");
+
+            Environment.SetEnvironmentVariable(envName, null, EnvironmentVariableTarget.Process);
+        }
         [Theory]
         [InlineData(new[] { "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", "-logfile", "build.log" }, "build.log")]
         [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite" }, "hoge.log")]
