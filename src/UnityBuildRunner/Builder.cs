@@ -9,6 +9,18 @@ using System.Threading.Tasks;
 
 namespace UnityBuildRunner
 {
+    public interface IBuilder
+    {
+        string[] Args { get; }
+        string ArgumentString { get; }
+        string UnityPath { get; }
+
+        Task<int> BuildAsync();
+        void ErrorFilter(string txt);
+        string GetLogFile();
+        Task InitializeAsync(string path);
+    }
+
     public class Builder : IBuilder
     {
         private static readonly RegexOptions regexOptions = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline;
@@ -38,7 +50,7 @@ namespace UnityBuildRunner
             if (UnityPath == null)
                 throw new ArgumentException("Missing environment variable `UnityPath`.");
             if (!File.Exists(UnityPath))
-                throw new FileNotFoundException("Can not find `UnityPath` environment variable...");
+                throw new FileNotFoundException($"Can not find specified UnityPath: {UnityPath}");
 
             // Logfile
             var logFile = GetLogFile();
