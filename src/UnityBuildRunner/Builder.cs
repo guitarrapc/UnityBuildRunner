@@ -63,7 +63,13 @@ namespace UnityBuildRunner
             Console.WriteLine($"Command line: {UnityPath} {ArgumentString}");
 
             // Build
-            using (var p = Process.Start(UnityPath, ArgumentString))
+            using (var p = Process.Start(new ProcessStartInfo()
+            {
+                FileName = UnityPath,
+                Arguments = ArgumentString,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            }))
             {
                 Console.WriteLine("Unity Build Started.");
 
