@@ -8,6 +8,7 @@ namespace Mock
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
     using FluentAssertions;
+    using Microsoft.Extensions.Logging;
 
     public class MicroMock
     {
@@ -16,6 +17,7 @@ namespace Mock
             {
                 services.AddSingleton<IBuilder, Builder>();
                 services.AddSingleton<ISettings, Settings>();
+                services.AddSingleton<ILogger, SimpleConsoleLogger>();
             })
             .RunBatchEngineAsync<UnityBuildRunnerBatch>(args);
     }
