@@ -6,49 +6,33 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using UnityBuildRunner.Core;
 
 namespace UnityBuildRunner
 {
     class Program
     {
-        //static int Main(string[] args)
-        //{
-        //    try
-        //    {
-        //        Console.WriteLine("Unity Build Begin.");
-        //        // option handling
-        //        ISettings settings = new Settings();
-        //        var unity = settings.GetUnityPath(args);
-
-        //        // builder
-        //        IBuilder builder = new Builder(unity, args);
-        //        return builder.BuildAsync(TimeSpan.FromMinutes(30)).GetAwaiter().GetResult();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.Error.WriteLine($@"{ex.Message}({ex.GetType().FullName}){Environment.NewLine}{ex.StackTrace}");
-        //        return 1;
-        //    }
-        //}
-
         static async Task Main(string[] args) => await new HostBuilder()
             .ConfigureServices((hostContext, services) =>
             {
                 services.AddSingleton<IBuilder, Builder>();
+                services.AddSingleton<ISettings, Settings>();
             })
             .RunBatchEngineAsync<UnityBuildRunnerBatch>(args);
 
         public class UnityBuildRunnerBatch : BatchBase
         {
             private readonly IBuilder builder;
-            public UnityBuildRunnerBatch(IBuilder builder)
+            private readonly ISettings settings;
+
+            public UnityBuildRunnerBatch(IBuilder builder, ISettings settings)
             {
                 this.builder = builder;
+                this.settings = settings;
             }
             public async Task Run()
             {
                 Context.Logger.LogInformation("Parsing Unity Arguments.");
-                var settings = new Settings();
                 settings.Parse(Context.Arguments, "");
 
                 Context.Logger.LogInformation("Unity Build Begin.");
@@ -60,7 +44,6 @@ namespace UnityBuildRunner
             {
                 Context.Logger.LogInformation("Parsing Unity Arguments.");
                 var args = Context.Arguments.Except(new[] { "-UnityPath", "-unityPath", "-u", unityPath }).ToArray();
-                var settings = new Settings();
                 settings.Parse(args, unityPath);
 
                 Context.Logger.LogInformation("Unity Build Begin.");
@@ -89,8 +72,9 @@ namespace UnityBuildRunner
             [Command(new[] { "help", "list", "-h", "-help", "--help" }, "show help")]
             public void Help()
             {
-                Context.Logger.LogInformation("Usage: UnityBuildRunner [-version] [-help] [run] [args]");
-                Context.Logger.LogInformation("E.g., run this: UnityBuildRunner build UNITYPATH");
+                Context.Logger.LogInformation("Usage: UnityBuildRunner [-version] [-help] [args]");
+                Context.Logger.LogInformation(@"E.g., run this: UnityBuildRunner -u UNITYPATH -quit -batchmode -buildTarget WindowsStoreApps -projectPath HOLOLENS_UNITYPROJECTPATH -logfile log.log -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN");
+                Context.Logger.LogInformation(@"E.g., set UnityPath as EnvironmentVariable `UnityPath` & run this: UnityBuildRunner -quit -batchmode -buildTarget WindowsStoreApps -projectPath HOLOLENS_UNITYPROJECTPATH -logfile log.log -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN");
             }
         }
     }
