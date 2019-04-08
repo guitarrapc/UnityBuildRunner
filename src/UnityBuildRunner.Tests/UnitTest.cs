@@ -1,7 +1,45 @@
 using FluentAssertions;
 using System;
-using UnityBuildRunner;
+using System.Threading.Tasks;
+using UnityBuildRunner.Core;
 using Xunit;
+
+namespace Mock
+{
+    using MicroBatchFramework;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Hosting;
+    using FluentAssertions;
+
+    public class MicroMock
+    {
+        public static async Task Main(string[] args) => await new HostBuilder()
+            .ConfigureServices((hostContext, services) =>
+            {
+                services.AddSingleton<IBuilder, Builder>();
+                services.AddSingleton<ISettings, Settings>();
+            })
+            .RunBatchEngineAsync<UnityBuildRunnerBatch>(args);
+    }
+
+    public class UnityBuildRunnerBatch : BatchBase
+    {
+        private readonly IBuilder builder;
+        private readonly ISettings settings;
+
+        public UnityBuildRunnerBatch(IBuilder builder, ISettings settings)
+        {
+            this.builder = builder;
+            this.settings = settings;
+        }
+
+        [Command(new[] { "-UnityPath", "-unityPath", "-u" })]
+        public void IsArgumentValid([Option(0, "Full Path to the Unity.exe")]string unityPath)
+        {
+            unityPath.Should().Be(@"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe");
+        }
+    }
+}
 
 namespace UnityBuildTunner.Tests
 {
@@ -16,93 +54,52 @@ namespace UnityBuildTunner.Tests
         }
 
         [Theory]
-        [InlineData(
-            @"-u C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe",
-            @"-u=C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe",
-            @"-unityPath C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe",
-            @"-unityPath=C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe",
-            @"--unityPath C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe",
-            @"--unityPath=C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe")]
-        public void IsArgumentValid(params string[] args)
+        [InlineData("-u", @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe")]
+        [InlineData("-unityPath", @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe")]
+        [InlineData("-UnityPath", @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe")]
+        public void IsUnityPathArgumentValid(params string[] args)
         {
-            ISettings options = new Settings();
-            var (unity, errorcode) = options.GetUnityPathArgs(args);
-            errorcode.Should().Be(0);
-            unity.Should().Be(@"C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe");
-
-            var unity2 = options.GetUnityPath(args);
-            unity2.Should().Be(@"C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe");
+            Mock.MicroMock.Main(args).GetAwaiter().GetResult();
         }
 
         [Theory]
-        [InlineData(@"-h", @"-help", @"--help")]
-        public void IsArgumentInvalid(params string[] args)
-        {
-            ISettings options = new Settings();
-            var (unity, errorcode) = options.GetUnityPathArgs(args);
-            errorcode.Should().Be(1);
-            unity.Should().Be("");
-
-            var unity2 = options.GetUnityPath(args);
-            unity2.Should().Be("");
-        }
-
-        [Theory]
-        [InlineData("-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", "-logfile", "build.log")]
-        [InlineData("-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite")]
-        public void IsArgumentSkipped(params string[] args)
-        {
-            ISettings options = new Settings();
-            var (unity, errorcode) = options.GetUnityPathArgs(args);
-            errorcode.Should().Be(0);
-            unity.Should().Be("");
-
-            var unity2 = options.GetUnityPath(args);
-            unity2.Should().Be("");
-        }
-
-        [Theory]
-        [InlineData("UnityPath", @"C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe")]
-        [InlineData("UnityPath", @"C:\Program Files\UnityApplications\2017.2.2p2\Editor\Unity.exe")]
+        [InlineData("UnityPath", @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe")]
+        [InlineData("UnityPath", @"C:\Program Files\Unity\Hub\2017.2.2p2\Editor\Unity.exe")]
         public void IsEnvironmentVariableExists(string envName, string unityPath)
         {
             Environment.SetEnvironmentVariable(envName, unityPath, EnvironmentVariableTarget.Process);
             Environment.GetEnvironmentVariable(envName).Should().NotBeNull();
 
-            ISettings options = new Settings();
-            var unity = options.GetUnityPathEnv();
-            unity.Should().Be(unity);
-
-            var unity2 = options.GetUnityPath(Array.Empty<string>());
-            unity2.Should().Be(unityPath);
+            ISettings settings = new Settings();
+            settings.Parse(Array.Empty<string>(), "");
+            settings.UnityPath.Should().Be(unityPath);
 
             Environment.SetEnvironmentVariable(envName, null, EnvironmentVariableTarget.Process);
         }
 
         [Theory]
-        [InlineData("hoge", @"C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe")]
-        [InlineData("fuga", @"C:\Program Files\UnityApplications\2017.2.2p2\Editor\Unity.exe")]
+        [InlineData("hoge", @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe")]
+        [InlineData("fuga", @"C:\Program Files\Unity\Hub\2017.2.2p2\Editor\Unity.exe")]
         public void IsEnvironmentVariableNotExists(string envName, string unityPath)
         {
             Environment.SetEnvironmentVariable(envName, unityPath, EnvironmentVariableTarget.Process);
             Environment.GetEnvironmentVariable(envName).Should().NotBeNull();
 
-            ISettings options = new Settings();
-            var unity = options.GetUnityPathEnv();
-            unity.Should().Be("");
-
-            var unity2 = options.GetUnityPath(Array.Empty<string>());
-            unity2.Should().Be("");
+            ISettings settings = new Settings();
+            settings.Parse(Array.Empty<string>(), "");
+            settings.UnityPath.Should().NotBe(unityPath);
 
             Environment.SetEnvironmentVariable(envName, null, EnvironmentVariableTarget.Process);
         }
+
         [Theory]
         [InlineData(new[] { "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", "-logfile", "build.log" }, "build.log")]
         [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite" }, "hoge.log")]
         public void ParseLogfile(string[] args, string logfile)
         {
-            var builder = new Builder("", args);
-            var log = builder.GetLogFile();
+            ISettings settings = new Settings();
+            settings.Parse(args, "");
+            var log = settings.GetLogFile(args);
             log.Should().Be(logfile);
         }
 
@@ -112,14 +109,14 @@ namespace UnityBuildTunner.Tests
             "DisplayProgressNotification: Build Failed",
             "Error building Player because scripts had compiler errors",
             @"2018-11-05T00:53:44.2566426Z DisplayProgressNotification: Build Failed
-Error building Player because scripts had compiler errors
-(Filename:  Line: -1)
-Unloading 64 Unused Serialized files (Serialized files now loaded: 0)
-System memory in use before: 63.0 MB.
-System memory in use after: 63.4 MB.
+        Error building Player because scripts had compiler errors
+        (Filename:  Line: -1)
+        Unloading 64 Unused Serialized files (Serialized files now loaded: 0)
+        System memory in use before: 63.0 MB.
+        System memory in use after: 63.4 MB.
 
-Unloading 47 unused Assets to reduce memory usage. Loaded Objects now: 5728.
-Total: 13.359500 ms (FindLiveObjects: 1.689200 ms CreateObjectMapping: 0.289900 ms MarkObjects: 11.349100 ms  DeleteObjects: 0.029600 ms)")]
+        Unloading 47 unused Assets to reduce memory usage. Loaded Objects now: 5728.
+        Total: 13.359500 ms (FindLiveObjects: 1.689200 ms CreateObjectMapping: 0.289900 ms MarkObjects: 11.349100 ms  DeleteObjects: 0.029600 ms)")]
         public void ShouldThrowErrorFilter(params string[] inputs)
         {
             var builder = new Builder();
