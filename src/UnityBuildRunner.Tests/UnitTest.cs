@@ -1,3 +1,4 @@
+using FluentAssertions;
 using System;
 using UnityBuildRunner;
 using Xunit;
@@ -26,11 +27,11 @@ namespace UnityBuildTunner.Tests
         {
             IOptions options = new Options();
             var (unity, errorcode) = options.GetUnityPathArgs(args);
-            errorcode.Is(0);
-            unity.Is(@"C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe");
+            errorcode.Should().Be(0);
+            unity.Should().Be(@"C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe");
 
             var unity2 = options.GetUnityPath(args);
-            unity2.Is(@"C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe");
+            unity2.Should().Be(@"C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe");
         }
 
         [Theory]
@@ -39,11 +40,11 @@ namespace UnityBuildTunner.Tests
         {
             IOptions options = new Options();
             var (unity, errorcode) = options.GetUnityPathArgs(args);
-            errorcode.Is(1);
-            unity.Is("");
+            errorcode.Should().Be(1);
+            unity.Should().Be("");
 
             var unity2 = options.GetUnityPath(args);
-            unity2.Is("");
+            unity2.Should().Be("");
         }
 
         [Theory]
@@ -53,11 +54,11 @@ namespace UnityBuildTunner.Tests
         {
             IOptions options = new Options();
             var (unity, errorcode) = options.GetUnityPathArgs(args);
-            errorcode.Is(0);
-            unity.Is("");
+            errorcode.Should().Be(0);
+            unity.Should().Be("");
 
             var unity2 = options.GetUnityPath(args);
-            unity2.Is("");
+            unity2.Should().Be("");
         }
 
         [Theory]
@@ -66,15 +67,14 @@ namespace UnityBuildTunner.Tests
         public void IsEnvironmentVariableExists(string envName, string unityPath)
         {
             Environment.SetEnvironmentVariable(envName, unityPath, EnvironmentVariableTarget.Process);
-            Environment.GetEnvironmentVariable(envName).IsNotNull();
-            Environment.GetEnvironmentVariable($"{envName}{Guid.NewGuid()}").IsNull();
+            Environment.GetEnvironmentVariable(envName).Should().NotBeNull();
 
             IOptions options = new Options();
             var unity = options.GetUnityPathEnv();
-            unity.Is(unity);
+            unity.Should().Be(unity);
 
             var unity2 = options.GetUnityPath(Array.Empty<string>());
-            unity2.Is(unityPath);
+            unity2.Should().Be(unityPath);
 
             Environment.SetEnvironmentVariable(envName, null, EnvironmentVariableTarget.Process);
         }
@@ -85,15 +85,14 @@ namespace UnityBuildTunner.Tests
         public void IsEnvironmentVariableNotExists(string envName, string unityPath)
         {
             Environment.SetEnvironmentVariable(envName, unityPath, EnvironmentVariableTarget.Process);
-            Environment.GetEnvironmentVariable(envName).IsNotNull();
-            Environment.GetEnvironmentVariable($"{envName}{Guid.NewGuid()}").IsNull();
+            Environment.GetEnvironmentVariable(envName).Should().NotBeNull();
 
             IOptions options = new Options();
             var unity = options.GetUnityPathEnv();
-            unity.Is("");
+            unity.Should().Be("");
 
             var unity2 = options.GetUnityPath(Array.Empty<string>());
-            unity2.Is("");
+            unity2.Should().Be("");
 
             Environment.SetEnvironmentVariable(envName, null, EnvironmentVariableTarget.Process);
         }
@@ -104,7 +103,7 @@ namespace UnityBuildTunner.Tests
         {
             var builder = new Builder("", args);
             var log = builder.GetLogFile();
-            log.Is(logfile);
+            log.Should().Be(logfile);
         }
 
         [Theory]

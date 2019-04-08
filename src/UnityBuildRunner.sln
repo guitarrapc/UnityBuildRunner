@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.27703.2035
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnityBuildRunner", "UnityBuildRunner\UnityBuildRunner.csproj", "{F7D92768-4B37-42DF-B960-56812E991CF6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnityBuildTunner.Tests", "UnityBuildTunner.Tests\UnityBuildTunner.Tests.csproj", "{AC08C393-021C-4A5F-A779-1ED9B5444E82}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnityBuildRunner.Tests", "UnityBuildRunner.Tests\UnityBuildRunner.Tests.csproj", "{AC08C393-021C-4A5F-A779-1ED9B5444E82}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
