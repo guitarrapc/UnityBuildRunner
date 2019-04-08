@@ -1,9 +1,7 @@
+using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -11,13 +9,8 @@ namespace UnityBuildRunner
 {
     public interface IBuilder
     {
-        string[] Args { get; }
-        string ArgumentString { get; }
-        string UnityPath { get; }
-
-        Task<int> BuildAsync();
+        Task<int> BuildAsync(ISettings settings, TimeSpan timeout);
         void ErrorFilter(string txt);
-        string GetLogFile();
         Task InitializeAsync(string path);
     }
 
@@ -31,49 +24,46 @@ namespace UnityBuildRunner
             "Error building Player because scripts had compiler errors",
         };
 
-        public string UnityPath { get; }
-        public string[] Args { get; }
-        public string ArgumentString { get; }
+        private readonly ILogger logger;
 
-        public Builder() { }
-
-        public Builder(string unityPath, string[] args)
+        public Builder()
         {
-            UnityPath = unityPath;
-            Args = args.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
-            ArgumentString = string.Join(" ", Args.Select(s => s.First() == '-' ? s : "\"" + Regex.Replace(s, @"(\\+)$", @"$1$1") + "\""));
+            this.logger = new SimpleConsoleLogger();
+        }
+        public Builder(ILogger logger)
+        {
+            this.logger = logger;
         }
 
-        public async Task<int> BuildAsync()
+        public async Task<int> BuildAsync(ISettings settings, TimeSpan timeout)
         {
             // validate
-            if (UnityPath == null)
-                throw new ArgumentException("Missing environment variable `UnityPath`.");
-            if (!File.Exists(UnityPath))
-                throw new FileNotFoundException($"Can not find specified UnityPath: {UnityPath}");
-
-            // Logfile
-            var logFile = GetLogFile();
-            if (string.IsNullOrEmpty(logFile))
-                throw new ArgumentException("Missing '-logFile filename' argument. Make sure you have target any build file path.");
+            if (string.IsNullOrWhiteSpace(settings.UnityPath))
+                throw new ArgumentException("Please pass Unity Executable path with argument `unityPath` or environment variable `UnityPath`.");
+            if (!File.Exists(settings.UnityPath))
+                throw new FileNotFoundException($"Can not find specified UnityPath: {settings.UnityPath}");
+            if (string.IsNullOrEmpty(settings.LogFilePath))
+                throw new ArgumentException("Missing '-logFile filename' argument. Make sure you have target any build log file path.");
 
             // Initialize
-            Console.WriteLine($"Detected LogFile: {logFile}");
-            await InitializeAsync(logFile);
-            Console.WriteLine($"Command line: {UnityPath} {ArgumentString}");
+            logger.LogInformation($"Detected LogFile: {settings.LogFilePath}");
+            await InitializeAsync(settings.LogFilePath);
+            logger.LogInformation($"Command line: {settings.UnityPath} {settings.ArgumentString}");
+
+            var stopwatch = Stopwatch.StartNew();
 
             // Build
             using (var p = Process.Start(new ProcessStartInfo()
             {
-                FileName = UnityPath,
-                Arguments = ArgumentString,
+                FileName = settings.UnityPath,
+                Arguments = settings.ArgumentString,
                 UseShellExecute = false,
                 CreateNoWindow = true,
             }))
             {
-                Console.WriteLine("Unity Build Started.");
+                logger.LogInformation("Unity Build Started.");
 
-                while (!File.Exists(logFile) && !p.HasExited)
+                while (!File.Exists(settings.LogFilePath) && !p.HasExited)
                 {
                     await Task.Delay(TimeSpan.FromMilliseconds(10));
                 }
@@ -82,11 +72,18 @@ namespace UnityBuildRunner
 
                 try
                 {
-                    using (var file = File.Open(logFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    using (var file = File.Open(settings.LogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     using (var reader = new StreamReader(file))
                     {
                         while (!p.HasExited)
                         {
+                            if (stopwatch.Elapsed.TotalMilliseconds > timeout.TotalMilliseconds)
+                            {
+                                p.Kill();
+                                logger.LogError($"Timeout exceeded. Timeout {timeout.TotalMinutes}min has been passed since begin.");
+                                stopwatch.Stop();
+                            }
+
                             ConsoleOut(reader);
                             await Task.Delay(TimeSpan.FromMilliseconds(500));
                         }
@@ -98,16 +95,17 @@ namespace UnityBuildRunner
                 catch (Exception ex)
                 {
                     p.Kill();
-                    Console.WriteLine(ex);
+                    logger.LogCritical(ex, "Unity Build unexpectedly finished.");
+                    throw ex;
                 }
 
                 if (p.ExitCode == 0)
                 {
-                    Console.WriteLine("Unity Build finished : Success.");
+                    logger.LogInformation("Unity Build finished : Success.");
                 }
                 else
                 {
-                    Console.WriteLine("Unity Build finished : Error happens.");
+                    logger.LogWarning("Unity Build finished : Error happens.");
                 }
                 return p.ExitCode;
             }
@@ -138,7 +136,7 @@ namespace UnityBuildRunner
             var txt = reader.ReadToEnd();
             if (string.IsNullOrEmpty(txt))
                 return;
-            Console.Write(txt);
+            logger.LogInformation(txt);
             ErrorFilter(txt);
         }
 
@@ -151,20 +149,6 @@ namespace UnityBuildRunner
                     throw new OperationCanceledException($"Build Error for error : {error}");
                 }
             }
-        }
-
-        public string GetLogFile()
-        {
-            var logFile = "";
-            for (var i = 0; i < Args.Length; i++)
-            {
-                if (string.Equals(Args[i], "-logFile", StringComparison.OrdinalIgnoreCase) && i + 1 < Args.Length)
-                {
-                    logFile = Args[i + 1];
-                    break;
-                }
-            }
-            return logFile;
         }
     }
 }
