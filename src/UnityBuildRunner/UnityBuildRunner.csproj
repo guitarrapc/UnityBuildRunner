@@ -6,6 +6,7 @@
     <LangVersion>latest</LangVersion>
     <Version>1.0.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
+    <PackAsTool>true</PackAsTool>
     <PackageId>UnityBuildRunner</PackageId>
     <Authors>guitarrapc</Authors>
     <Description>Unity Build Runner. dotnet global tool of UnityBuildRunner.Core. Offers Stdout on Windows.</Description>
@@ -14,6 +15,7 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>Unity</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +25,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\UnityBuildRunner.Core\UnityBuildRunner.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
