@@ -26,10 +26,6 @@ namespace UnityBuildRunner.Core
 
         private readonly ILogger logger;
 
-        public Builder()
-        {
-            this.logger = new SimpleConsoleLogger();
-        }
         public Builder(ILogger logger)
         {
             this.logger = logger;
@@ -124,7 +120,7 @@ namespace UnityBuildRunner.Core
                 }
                 catch (IOException)
                 {
-                    Console.WriteLine($"Couldn't delete {path}. trying again.");
+                    Console.WriteLine($"Couldn't delete {path}. trying again.({i + 1}/10)");
                     await Task.Delay(TimeSpan.FromSeconds(1));
                     continue;
                 }

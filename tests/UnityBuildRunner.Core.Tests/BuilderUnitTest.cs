@@ -3,7 +3,7 @@ using Xunit;
 
 namespace UnityBuildRunner.Core.Tests
 {
-    public class UnitTest1
+    public class BuilderUnitTest
     {
         [Theory]
         [InlineData(
@@ -21,7 +21,7 @@ namespace UnityBuildRunner.Core.Tests
         Total: 13.359500 ms (FindLiveObjects: 1.689200 ms CreateObjectMapping: 0.289900 ms MarkObjects: 11.349100 ms  DeleteObjects: 0.029600 ms)")]
         public void ShouldThrowErrorFilter(params string[] inputs)
         {
-            var builder = new Builder();
+            var builder = new Builder(new SimpleConsoleLogger());
             foreach (var input in inputs)
             {
                 Assert.Throws<OperationCanceledException>(() => builder.ErrorFilter(input));
@@ -34,7 +34,7 @@ namespace UnityBuildRunner.Core.Tests
             "System memory in use before: 63.0 MB.", "DisplayProgressbar: Unity Package Manager")]
         public void ShouldNotThrowErrorFilter(params string[] inputs)
         {
-            var builder = new Builder();
+            var builder = new Builder(new SimpleConsoleLogger());
             foreach (var input in inputs)
             {
                 try
