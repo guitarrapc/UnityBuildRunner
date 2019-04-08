@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using System;
 
-namespace UnityBuildRunner
+namespace UnityBuildRunner.Core
 {
     public class SimpleConsoleLoggerProvider : ILoggerProvider
     {

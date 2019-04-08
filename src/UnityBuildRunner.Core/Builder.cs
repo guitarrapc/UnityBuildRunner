@@ -5,7 +5,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace UnityBuildRunner
+namespace UnityBuildRunner.Core
 {
     public interface IBuilder
     {
