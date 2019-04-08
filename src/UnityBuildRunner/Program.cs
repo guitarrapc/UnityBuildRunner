@@ -17,6 +17,7 @@ namespace UnityBuildRunner
             {
                 services.AddSingleton<IBuilder, Builder>();
                 services.AddSingleton<ISettings, Settings>();
+                services.AddSingleton<ILogger, SimpleConsoleLogger>();
             })
             .RunBatchEngineAsync<UnityBuildRunnerBatch>(args);
 
@@ -30,6 +31,7 @@ namespace UnityBuildRunner
                 this.builder = builder;
                 this.settings = settings;
             }
+
             public async Task Run()
             {
                 Context.Logger.LogInformation("Parsing Unity Arguments.");
