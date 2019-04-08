@@ -25,7 +25,7 @@ namespace UnityBuildTunner.Tests
             @"--unityPath=C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe")]
         public void IsArgumentValid(params string[] args)
         {
-            IOptions options = new Options();
+            ISettings options = new Settings();
             var (unity, errorcode) = options.GetUnityPathArgs(args);
             errorcode.Should().Be(0);
             unity.Should().Be(@"C:\Program Files\UnityApplications\2017.4.5f1\Editor\Unity.exe");
@@ -38,7 +38,7 @@ namespace UnityBuildTunner.Tests
         [InlineData(@"-h", @"-help", @"--help")]
         public void IsArgumentInvalid(params string[] args)
         {
-            IOptions options = new Options();
+            ISettings options = new Settings();
             var (unity, errorcode) = options.GetUnityPathArgs(args);
             errorcode.Should().Be(1);
             unity.Should().Be("");
@@ -52,7 +52,7 @@ namespace UnityBuildTunner.Tests
         [InlineData("-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite")]
         public void IsArgumentSkipped(params string[] args)
         {
-            IOptions options = new Options();
+            ISettings options = new Settings();
             var (unity, errorcode) = options.GetUnityPathArgs(args);
             errorcode.Should().Be(0);
             unity.Should().Be("");
@@ -69,7 +69,7 @@ namespace UnityBuildTunner.Tests
             Environment.SetEnvironmentVariable(envName, unityPath, EnvironmentVariableTarget.Process);
             Environment.GetEnvironmentVariable(envName).Should().NotBeNull();
 
-            IOptions options = new Options();
+            ISettings options = new Settings();
             var unity = options.GetUnityPathEnv();
             unity.Should().Be(unity);
 
@@ -87,7 +87,7 @@ namespace UnityBuildTunner.Tests
             Environment.SetEnvironmentVariable(envName, unityPath, EnvironmentVariableTarget.Process);
             Environment.GetEnvironmentVariable(envName).Should().NotBeNull();
 
-            IOptions options = new Options();
+            ISettings options = new Settings();
             var unity = options.GetUnityPathEnv();
             unity.Should().Be("");
 
