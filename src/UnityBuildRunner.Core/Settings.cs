@@ -13,6 +13,7 @@ namespace UnityBuildRunner.Core
         string LogFilePath { get;}
 
         void Parse(string[] args, string unityPath);
+        string GetLogFile(string[] args);
     }
 
     public class Settings : ISettings
@@ -30,7 +31,7 @@ namespace UnityBuildRunner.Core
             LogFilePath = GetLogFile(args);
         }
 
-        private string GetLogFile(string[] args)
+        public string GetLogFile(string[] args)
         {
             var logFile = "";
             for (var i = 0; i < args.Length; i++)
