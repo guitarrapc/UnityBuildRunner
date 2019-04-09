@@ -21,9 +21,18 @@ Install-Package UnityBuildRunner.Core
 
 ## Usage
 
-You can run build by dotnet global tools. 
+### CLI
 
-There 2 choice to pass unity app's path, pass unity path on the argument or via Environment Variables.
+Only you need to do is pass unity's path as `-u UnityPath` with unity build cli argements as normal.
+
+> [Unity \- Manual: Command line arguments](https://docs.unity3d.com/2018.3/Documentation/Manual/CommandLineArguments.html)
+
+You can run build by dotnet global tools so the installation is minimum cost. This tool will send you cli stdout on windows platform and also control Timeout.
+
+There 2 choice to pass unity app's path.
+
+1. pass unity path on the argument with parameter `-UnityPath or -u`.
+1. via Environment Variables `UnityPath`.
 
 ```bash
 UnityBuildRunner -UnityPath "C:\Program Files\UnityApplications\2017.2.2p2\Editor\Unity.exe" -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\workspace\Source\Repos\MRTKSample\Unity" -logfile "log.log" -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
@@ -35,6 +44,17 @@ UnityBuildRunner -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "
 ```
 
 macOS don't need use this tool, just pass non string with `-logfile` argument.
+
+### Library
+
+Only you need to do is pass unity's path as `-u UnityPath` with unity build cli argements as normal.
+
+```csharp
+ISettings settings = new Settings();
+settings.Parse(args, "path/to/unity/exe");
+IBuilder builder = new Builder();
+builder.BuildAsync(settings, TimeSpan.FromMinutes(30));
+```
 
 ## Motivation
 
