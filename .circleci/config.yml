@@ -27,20 +27,20 @@ jobs:
           name: deploy when exists tag
           command: |
             if [ "${CIRCLE_TAG-undefined}" != "undefined" ]; then
-              dotnet build -c ${BUILD_CONFIG} -p:Version=${CIRCLE_TAG}
-              dotnet test -c ${BUILD_CONFIG} --no-build
-              dotnet pack ./src/UnityBuildRunner.Core/UnityBuildRunner.Core.csproj -c ${BUILD_CONFIG} --no-build -p:Version=${CIRCLE_TAG}
-              dotnet pack ./src/UnityBuildRunner/UnityBuildRunner.csproj -c ${BUILD_CONFIG} --no-build -p:Version=${CIRCLE_TAG}
-              dotnet nuget push ./src/UnityBuildRunner.Core/bin/${BUILD_CONFIG}/UnityBuildRunner.Core.${CIRCLE_TAG}.nupkg -s https://www.nuget.org/api/v2/package -k ${NUGET_KEY}
-              dotnet nuget push ./src/UnityBuildRunner/bin/${BUILD_CONFIG}/UnityBuildRunner.${CIRCLE_TAG}.nupkg -s https://www.nuget.org/api/v2/package -k ${NUGET_KEY}
+              dotnet build -c Release -p:Version=${CIRCLE_TAG}
+              dotnet test -c Release --no-build
+              dotnet pack ./src/UnityBuildRunner.Core/UnityBuildRunner.Core.csproj -c Release --no-build -p:Version=${CIRCLE_TAG}
+              dotnet pack ./src/UnityBuildRunner/UnityBuildRunner.csproj -c Release --no-build -p:Version=${CIRCLE_TAG}
+              dotnet nuget push ./src/UnityBuildRunner.Core/bin/Release/UnityBuildRunner.Core.${CIRCLE_TAG}.nupkg -s https://www.nuget.org/api/v2/package -k ${NUGET_KEY}
+              dotnet nuget push ./src/UnityBuildRunner/bin/Release/UnityBuildRunner.${CIRCLE_TAG}.nupkg -s https://www.nuget.org/api/v2/package -k ${NUGET_KEY}
             else
               echo tag not exists
             fi
       - store_artifacts:
-          path: ./src/UnityBuildRunner.Core/bin/${BUILD_CONFIG}
+          path: ./src/UnityBuildRunner.Core/bin/Release
           destination: ./UnityBuildRunner.Core/
       - store_artifacts:
-          path: ./src/UnityBuildRunner/bin/${BUILD_CONFIG}
+          path: ./src/UnityBuildRunner/bin/Release
           destination: ./UnityBuildRunner/
 workflows:
   build-and-push:
