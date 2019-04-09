@@ -23,6 +23,12 @@ Install-Package UnityBuildRunner.Core
 
 ### CLI
 
+```
+Usage: UnityBuildRunner [-UnityPath|-unityPath|-u] [-timeout|-t 00:30:00] [-version] [-help] [args]
+E.g., run this: UnityBuildRunner -u UNITYPATH -quit -batchmode -buildTarget WindowsStoreApps -projectPath HOLOLENS_UNITYPROJECTPATH -logfile log.log -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN
+E.g., set UnityPath as EnvironmentVariable `UnityPath` & run this: UnityBuildRunner -quit -batchmode -buildTarget WindowsStoreApps -projectPath HOLOLENS_UNITYPROJECTPATH -logfile log.log -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN
+```
+
 Only you need to do is pass unity's path as `-u UnityPath` with unity build cli argements as normal.
 
 > [Unity \- Manual: Command line arguments](https://docs.unity3d.com/2018.3/Documentation/Manual/CommandLineArguments.html)
