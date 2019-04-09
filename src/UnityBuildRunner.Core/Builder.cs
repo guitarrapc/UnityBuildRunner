@@ -24,9 +24,9 @@ namespace UnityBuildRunner.Core
             "Error building Player because scripts had compiler errors",
         };
 
-        private readonly ILogger logger;
+        private readonly ILogger<Builder> logger;
 
-        public Builder(ILogger logger)
+        public Builder(ILogger<Builder> logger)
         {
             this.logger = logger;
         }
@@ -80,12 +80,12 @@ namespace UnityBuildRunner.Core
                                 stopwatch.Stop();
                             }
 
-                            ConsoleOut(reader);
+                            ReadLog(reader);
                             await Task.Delay(TimeSpan.FromMilliseconds(500));
                         }
 
                         await Task.Delay(TimeSpan.FromMilliseconds(500));
-                        ConsoleOut(reader);
+                        ReadLog(reader);
                     }
                 }
                 catch (Exception ex)
@@ -120,14 +120,14 @@ namespace UnityBuildRunner.Core
                 }
                 catch (IOException)
                 {
-                    Console.WriteLine($"Couldn't delete {path}. trying again.({i + 1}/10)");
+                    logger.LogWarning($"Couldn't delete {path}. trying again.({i + 1}/10)");
                     await Task.Delay(TimeSpan.FromSeconds(1));
                     continue;
                 }
             }
         }
 
-        private void ConsoleOut(StreamReader reader)
+        private void ReadLog(StreamReader reader)
         {
             var txt = reader.ReadToEnd();
             if (string.IsNullOrEmpty(txt))

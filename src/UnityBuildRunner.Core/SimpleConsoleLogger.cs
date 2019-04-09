@@ -5,13 +5,13 @@ using System;
 
 namespace UnityBuildRunner.Core
 {
-    public class SimpleConsoleLoggerProvider : ILoggerProvider
+    public class SimpleConsoleLoggerProvider<T> : ILoggerProvider
     {
-        readonly SimpleConsoleLogger logger;
+        readonly SimpleConsoleLogger<T> logger;
 
         public SimpleConsoleLoggerProvider()
         {
-            logger = new SimpleConsoleLogger();
+            logger = new SimpleConsoleLogger<T>();
         }
 
         public ILogger CreateLogger(string categoryName)
@@ -24,7 +24,7 @@ namespace UnityBuildRunner.Core
         }
     }
 
-    public class SimpleConsoleLogger : ILogger
+    public class SimpleConsoleLogger<T> : ILogger<T>
     {
         public SimpleConsoleLogger()
         {
@@ -70,9 +70,9 @@ namespace UnityBuildRunner.Core
 
     public static class SimpleConsoleLoggerExtensions
     {
-        public static ILoggingBuilder AddSimpleConsole(this ILoggingBuilder builder)
+        public static ILoggingBuilder AddSimpleConsole<T>(this ILoggingBuilder builder)
         {
-            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, SimpleConsoleLoggerProvider>());
+            builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, SimpleConsoleLoggerProvider<T>>());
             return builder;
         }
     }

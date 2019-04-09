@@ -17,7 +17,7 @@ namespace UnityBuildRunner
             {
                 services.AddSingleton<IBuilder, Builder>();
                 services.AddSingleton<ISettings, Settings>();
-                services.AddSingleton<ILogger, SimpleConsoleLogger>();
+                services.AddSingleton<ILogger, SimpleConsoleLogger<Builder>>();
             })
             .RunBatchEngineAsync<UnityBuildRunnerBatch>(args);
 
