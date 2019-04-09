@@ -9,6 +9,7 @@ namespace Mock
     using Microsoft.Extensions.Hosting;
     using FluentAssertions;
     using Microsoft.Extensions.Logging;
+    using System;
 
     public class MicroMock
     {
@@ -34,9 +35,18 @@ namespace Mock
         }
 
         [Command(new[] { "-UnityPath", "-unityPath", "-u" })]
-        public void IsArgumentValid([Option(0, "Full Path to the Unity.exe")]string unityPath)
+        public async Task ParameterTest([Option(0, "Full Path to the Unity.exe")]string unityPath, [Option("-t")]string timeout = "00:30:00")
         {
             unityPath.Should().Be(@"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe");
+            var timeoutSpan = TimeSpan.Parse(timeout);
+            timeoutSpan.Should().As<TimeSpan>();
+        }
+
+        [Command(new[] { "-Timespan", "-t", })]
+        public async Task TimeSpanTest([Option(0)]string timeout)
+        {
+            var timeoutSpan = TimeSpan.Parse(timeout);
+            timeoutSpan.Should().As<TimeSpan>();
         }
     }
 }
@@ -49,6 +59,11 @@ namespace UnityBuildTunner.Tests
         [InlineData("-u", @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe")]
         [InlineData("-unityPath", @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe")]
         [InlineData("-UnityPath", @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe")]
+        [InlineData("-u", @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe", "-Timeout", "1.00:00:00")]
+        [InlineData("-unityPath", @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe", "-timeout", "00:01:00")]
+        [InlineData("-UnityPath", @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe", "-t", "00:30:00")]
+        [InlineData("-Timespan", "00:20:20")]
+        [InlineData("-t", "00:20:20")]
         public void IsUnityPathArgumentValid(params string[] args)
         {
             Mock.MicroMock.Main(args).GetAwaiter().GetResult();
