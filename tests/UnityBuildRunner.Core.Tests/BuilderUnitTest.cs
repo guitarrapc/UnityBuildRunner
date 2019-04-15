@@ -18,7 +18,9 @@ namespace UnityBuildRunner.Core.Tests
         System memory in use after: 63.4 MB.
 
         Unloading 47 unused Assets to reduce memory usage. Loaded Objects now: 5728.
-        Total: 13.359500 ms (FindLiveObjects: 1.689200 ms CreateObjectMapping: 0.289900 ms MarkObjects: 11.349100 ms  DeleteObjects: 0.029600 ms)")]
+        Total: 13.359500 ms (FindLiveObjects: 1.689200 ms CreateObjectMapping: 0.289900 ms MarkObjects: 11.349100 ms  DeleteObjects: 0.029600 ms)",
+            "Compilation failed: 634 error(s), 0 warnings",
+            "Assets/Externals/Plugins/Zenject/Source/Binding/Binders/NonLazyBinder.cs(10,16): error CS0246: The type or namespace name `IfNotBoundBinder' could not be found. Are you missing an assembly reference?")]
         public void ShouldThrowErrorFilter(params string[] inputs)
         {
             var builder = new Builder(new SimpleConsoleLogger<Builder>());

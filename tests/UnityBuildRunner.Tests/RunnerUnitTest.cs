@@ -51,7 +51,7 @@ namespace Mock
     }
 }
 
-namespace UnityBuildTunner.Tests
+namespace UnityBuildRunner.Tests
 {
     public class RunnerUnitTest
     {
