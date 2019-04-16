@@ -46,7 +46,15 @@ namespace UnityBuildRunner
                 }
 
                 Context.Logger.LogInformation("Unity Build Begin.");
-                await builder.BuildAsync(settings, TimeSpan.FromMinutes(30));
+                try
+                {
+                    var result = await builder.BuildAsync(settings, TimeSpan.FromMinutes(30));
+                    Environment.ExitCode = result;
+                }
+                catch (Exception)
+                {
+                    Environment.ExitCode = 1;
+                }
             }
 
             [Command(new[] { "-UnityPath", "-unityPath", "-u" })]
@@ -66,7 +74,15 @@ namespace UnityBuildRunner
                 }
 
                 Context.Logger.LogInformation("Unity Build Begin.");
-                await builder.BuildAsync(settings, timeoutSpan);
+                try
+                {
+                    var result = await builder.BuildAsync(settings, timeoutSpan);
+                    Environment.ExitCode = result;
+                }
+                catch (Exception)
+                {
+                    Environment.ExitCode = 1;
+                }
             }
 
             /// <summary>
