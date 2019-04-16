@@ -94,7 +94,7 @@ namespace UnityBuildRunner.Core
                 {
                     p.Kill();
                     logger.LogCritical(ex, "Unity Build unexpectedly finished.");
-                    throw ex;
+                    throw;
                 }
 
                 if (p.ExitCode == 0)
