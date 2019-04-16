@@ -12,7 +12,7 @@ namespace UnityBuildRunner
 {
     class Program
     {
-        static async Task Main(string[] args) => await new HostBuilder()
+        static async Task Main(string[] args) => await BatchHost.CreateDefaultBuilder()
             .ConfigureServices((hostContext, services) =>
             {
                 services.AddSingleton<IBuilder, Builder>();
