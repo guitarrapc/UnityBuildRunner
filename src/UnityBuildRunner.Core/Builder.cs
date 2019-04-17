@@ -23,7 +23,8 @@ namespace UnityBuildRunner.Core
             "DisplayProgressNotification: Build Failed",
             "Error building Player because scripts had compiler errors",
             "Compilation failed",
-            @"error CS\d+"
+            @"error CS\d+",
+            "Unity has not been activated",
         };
 
         private readonly ILogger<Builder> logger;
