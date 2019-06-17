@@ -24,7 +24,9 @@ Install-Package UnityBuildRunner.Core
 ### CLI
 
 ```
-Usage: UnityBuildRunner [-UnityPath|-unityPath|-u] [-timeout|-t 00:30:00] [-version] [-help] [args]
+Usage: UnityBuildRunner [-UnityPath|-unityPath|-u] [-timeout|-t 00:60:00] [-version] [-help] [args]
+If you omit -logFile xxxx.log, default LogFilePath '-logFile unitybuild.log' will be use.
+E.g., run this: UnityBuildRunner -u UNITYPATH -quit -batchmode -buildTarget WindowsStoreApps -projectPath HOLOLENS_UNITYPROJECTPATH -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN
 E.g., run this: UnityBuildRunner -u UNITYPATH -quit -batchmode -buildTarget WindowsStoreApps -projectPath HOLOLENS_UNITYPROJECTPATH -logfile log.log -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN
 E.g., set UnityPath as EnvironmentVariable `UnityPath` & run this: UnityBuildRunner -quit -batchmode -buildTarget WindowsStoreApps -projectPath HOLOLENS_UNITYPROJECTPATH -logfile log.log -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN
 ```
