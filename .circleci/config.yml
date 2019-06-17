@@ -28,7 +28,7 @@ jobs:
           command: |
             if [ "${CIRCLE_TAG-undefined}" != "undefined" ]; then
               dotnet build -c Release -p:Version=${CIRCLE_TAG}
-              dotnet test -c Release --no-build
+              x=$(dotnet test -c Release --no-build); echo $x;
               dotnet pack ./src/UnityBuildRunner.Core/UnityBuildRunner.Core.csproj -c Release --no-build -p:Version=${CIRCLE_TAG}
               dotnet pack ./src/UnityBuildRunner/UnityBuildRunner.csproj -c Release --no-build -p:Version=${CIRCLE_TAG}
               dotnet nuget push ./src/UnityBuildRunner.Core/bin/Release/UnityBuildRunner.Core.${CIRCLE_TAG}.nupkg -s https://www.nuget.org/api/v2/package -k ${NUGET_KEY}
