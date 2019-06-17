@@ -12,12 +12,12 @@ namespace UnityBuildRunner
 {
     class Program
     {
+        private const string defaultTimeout = "00:60:00";
         static async Task Main(string[] args) => await BatchHost.CreateDefaultBuilder()
             .ConfigureServices((hostContext, services) =>
             {
                 services.AddSingleton<IBuilder, Builder>();
                 services.AddSingleton<ISettings, Settings>();
-                services.AddSingleton<ILogger, SimpleConsoleLogger<Builder>>();
             })
             .RunBatchEngineAsync<UnityBuildRunnerBatch>(args);
 
@@ -32,13 +32,13 @@ namespace UnityBuildRunner
                 this.settings = settings;
             }
 
-            public async Task Run([Option("-t")]string timeout = "00:30:00")
+            public async Task RunWithoutUnityPath([Option("-t")]string timeout = defaultTimeout)
             {
                 var args = Context.Arguments
                     .Except(new[] { "-timeout", "-t", timeout })
                     .ToArray();
-                settings.Parse(Context.Arguments, "");
-                var timeoutSpan = TimeSpan.TryParse(timeout, out var r) ? r : TimeSpan.FromMinutes(30);
+                settings.Parse(args, "");
+                var timeoutSpan = TimeSpan.TryParse(timeout, out var r) ? r : TimeSpan.FromMinutes(60);
                 if (string.IsNullOrWhiteSpace(settings.LogFilePath) || string.IsNullOrWhiteSpace(settings.ArgumentString))
                 {
                     Help();
@@ -48,24 +48,25 @@ namespace UnityBuildRunner
                 Context.Logger.LogInformation("Unity Build Begin.");
                 try
                 {
-                    var result = await builder.BuildAsync(settings, TimeSpan.FromMinutes(30));
+                    var result = await builder.BuildAsync(settings, timeoutSpan);
                     Environment.ExitCode = result;
                 }
                 catch (Exception)
                 {
+                    Help();
                     Environment.ExitCode = 1;
                 }
             }
 
             [Command(new[] { "-UnityPath", "-unityPath", "-u" })]
-            public async Task UnityPath([Option(0, "Full Path to the Unity.exe")]string unityPath, [Option("-t")]string timeout = "00:30:00")
+            public async Task RunWithUnityPath([Option(0, "Full Path to the Unity.exe")]string unityPath, [Option("-t")]string timeout = defaultTimeout)
             {
                 var args = Context.Arguments
                     .Except(new[] { "-UnityPath", "-unityPath", "-u", unityPath })
                     .Except(new[] { "-timeout", "-t", timeout })
                     .ToArray();
                 settings.Parse(args, unityPath);
-                var timeoutSpan = TimeSpan.TryParse(timeout, out var r) ? r : TimeSpan.FromMinutes(30);
+                var timeoutSpan = TimeSpan.TryParse(timeout, out var r) ? r : TimeSpan.FromMinutes(60);
 
                 if (string.IsNullOrWhiteSpace(settings.LogFilePath) || string.IsNullOrWhiteSpace(settings.ArgumentString))
                 {
@@ -107,7 +108,9 @@ namespace UnityBuildRunner
             [Command(new[] { "help", "list", "-h", "-help", "--help" }, "show help")]
             public void Help()
             {
-                Context.Logger.LogInformation("Usage: UnityBuildRunner [-UnityPath|-unityPath|-u] [-timeout|-t 00:30:00] [-version] [-help] [args]");
+                Context.Logger.LogInformation($"Usage: UnityBuildRunner [-UnityPath|-unityPath|-u] [-timeout|-t {defaultTimeout}] [-version] [-help] [args]");
+                Context.Logger.LogInformation("If you omit -logFile xxxx.log, default LogFilePath '-logFile unitybuild.log' will be use.");
+                Context.Logger.LogInformation(@"E.g., run this: UnityBuildRunner -u UNITYPATH -quit -batchmode -buildTarget WindowsStoreApps -projectPath HOLOLENS_UNITYPROJECTPATH -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN");
                 Context.Logger.LogInformation(@"E.g., run this: UnityBuildRunner -u UNITYPATH -quit -batchmode -buildTarget WindowsStoreApps -projectPath HOLOLENS_UNITYPROJECTPATH -logfile log.log -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN");
                 Context.Logger.LogInformation(@"E.g., set UnityPath as EnvironmentVariable `UnityPath` & run this: UnityBuildRunner -quit -batchmode -buildTarget WindowsStoreApps -projectPath HOLOLENS_UNITYPROJECTPATH -logfile log.log -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN");
             }

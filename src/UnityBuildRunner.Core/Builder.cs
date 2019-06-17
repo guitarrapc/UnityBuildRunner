@@ -38,9 +38,9 @@ namespace UnityBuildRunner.Core
         {
             // validate
             if (string.IsNullOrWhiteSpace(settings.UnityPath))
-                throw new ArgumentException("Please pass Unity Executable path with argument `unityPath` or environment variable `UnityPath`.");
+                throw new ArgumentException($"Please pass Unity Executable path with argument `unityPath` or environment variable `{nameof(settings.UnityPath)}`.");
             if (!File.Exists(settings.UnityPath))
-                throw new FileNotFoundException($"Can not find specified UnityPath: {settings.UnityPath}");
+                throw new FileNotFoundException($"Can not find specified path of {nameof(settings.UnityPath)}: {settings.UnityPath}");
             if (string.IsNullOrEmpty(settings.LogFilePath))
                 throw new ArgumentException("Missing '-logFile filename' argument. Make sure you have target any build log file path.");
 
@@ -67,7 +67,10 @@ namespace UnityBuildRunner.Core
                     await Task.Delay(TimeSpan.FromMilliseconds(10));
                 }
                 if (p.HasExited)
+                {
+                    logger.LogCritical($"Unity process started but build unexpectedly finished before began build. exitcode: {p.ExitCode}");
                     return p.ExitCode;
+                }
 
                 try
                 {
@@ -94,17 +97,17 @@ namespace UnityBuildRunner.Core
                 catch (Exception ex)
                 {
                     p.Kill();
-                    logger.LogCritical(ex, "Unity Build unexpectedly finished.");
+                    logger.LogCritical(ex, $"Unity Build unexpectedly finished. exitcode: {p.ExitCode}, error message: {ex.Message}");
                     throw;
                 }
 
                 if (p.ExitCode == 0)
                 {
-                    logger.LogInformation("Unity Build finished : Success.");
+                    logger.LogInformation($"Unity Build finished : Success. exitcode: {p.ExitCode}");
                 }
                 else
                 {
-                    logger.LogWarning("Unity Build finished : Error happens.");
+                    logger.LogError($"Unity Build finished : Error happens. exitcode: {p.ExitCode}");
                 }
                 return p.ExitCode;
             }
@@ -145,7 +148,7 @@ namespace UnityBuildRunner.Core
             {
                 if (Regex.IsMatch(txt, error, regexOptions))
                 {
-                    throw new OperationCanceledException($"Build Error for error : {error}");
+                    throw new OperationCanceledException($"ErrorFilter catched specific build error: {error}");
                 }
             }
         }

@@ -25,10 +25,16 @@ namespace UnityBuildRunner.Core
 
         public void Parse(string[] args, string unityPath)
         {
-            UnityPath = !string.IsNullOrWhiteSpace(unityPath) ? unityPath : Environment.GetEnvironmentVariable("UnityPath");
+            UnityPath = !string.IsNullOrWhiteSpace(unityPath) ? unityPath : Environment.GetEnvironmentVariable(nameof(UnityPath));
+            LogFilePath = GetLogFile(args);
+            // fallback logfilePath
+            if (string.IsNullOrWhiteSpace(LogFilePath))
+            {
+                LogFilePath = "unitybuild.log";
+                args = args.Concat(new[] { "-logFile", "unitybuild.log" }).ToArray();
+            }
             Args = args.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
             ArgumentString = string.Join(" ", Args.Select(s => s.First() == '-' ? s : "\"" + Regex.Replace(s, @"(\\+)$", @"$1$1") + "\""));
-            LogFilePath = GetLogFile(args);
         }
 
         public string GetLogFile(string[] args)

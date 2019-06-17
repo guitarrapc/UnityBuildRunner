@@ -1,24 +1,20 @@
 using System.Threading.Tasks;
 using UnityBuildRunner.Core;
 using Xunit;
+using MicroBatchFramework;
+using Microsoft.Extensions.DependencyInjection;
+using FluentAssertions;
+using System;
 
 namespace Mock
 {
-    using MicroBatchFramework;
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Hosting;
-    using FluentAssertions;
-    using Microsoft.Extensions.Logging;
-    using System;
-
     public class MicroMock
     {
-        public static async Task Main(string[] args) => await new HostBuilder()
+        public static async Task Main(string[] args) => await BatchHost.CreateDefaultBuilder()
             .ConfigureServices((hostContext, services) =>
             {
                 services.AddSingleton<IBuilder, Builder>();
                 services.AddSingleton<ISettings, Settings>();
-                services.AddSingleton<ILogger, SimpleConsoleLogger<Builder>>();
             })
             .RunBatchEngineAsync<UnityBuildRunnerBatch>(args);
     }

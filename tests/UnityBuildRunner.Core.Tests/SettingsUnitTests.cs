@@ -33,6 +33,7 @@ namespace UnityBuildRunner.Core.Tests
             ISettings settings = new Settings();
             settings.Parse(Array.Empty<string>(), "");
             settings.UnityPath.Should().NotBe(unityPath);
+            settings.LogFilePath.Should().Be("unitybuild.log");
 
             Environment.SetEnvironmentVariable(envName, null, EnvironmentVariableTarget.Process);
         }
@@ -53,6 +54,7 @@ namespace UnityBuildRunner.Core.Tests
         [InlineData(new[] { "-bathmode", "", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", "-logfile", "build.log" }, new[] { "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", "-logfile", "build.log" })]
         [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", " " }, new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite" })]
         [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", " ", "HogemogeProject", "-executeMethod", "MethodName", "-quite" }, new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite" })]
+        [InlineData(new[] { "-bathmode", "-nographics", "-projectpath", " ", "HogemogeProject", "-executeMethod", "MethodName", "-quite" }, new[] { "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", "-logFile", "unitybuild.log" })]
         public void ArgsShouldNotContainNullOrWhiteSpace(string[] actual, string[] expected)
         {
             ISettings settings = new Settings();
