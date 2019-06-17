@@ -14,7 +14,7 @@ jobs:
       - checkout
       - run: dotnet tool install -g dotnet-reportgenerator-globaltool
       - run: dotnet build -c Debug
-      - run: dotnet test -c Debug --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:Include=[Base64UrlCore.*]*
+      - run: x=$(dotnet test -c Debug --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:Include=[Base64UrlCore.*]*); echo $x;
       - run: curl -s https://codecov.io/bash > codecov
       - run: chmod +x codecov
       - run: ./codecov -f ./tests/UnityBuildRunner.Tests/coverage.opencover.xml
