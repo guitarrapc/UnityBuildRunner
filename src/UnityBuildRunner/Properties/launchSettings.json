@@ -2,9 +2,17 @@
   "profiles": {
     "UnityBuildRunner": {
       "commandName": "Project",
-      "commandLineArgs": "-u \"C:\\Program Files\\Unity\\Hub\\Editor\\2018.3.13f1\\Editor\\Unity.exe\" -quit -batchmode -buildTarget WindowsStoreApps -projectPath D:\\git\\guitarrapc\\HoloLens-AzurePipelinev1 -logfile log.log -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN",
+      "commandLineArgs": ""
+    },
+    "UnityBuildRunner (unity-path)": {
+      "commandName": "Project",
+      "commandLineArgs": "--unity-path \"C:\\Program Files\\Unity\\Hub\\Editor\\2021.3.11f1\\Editor\\Unity.exe\" -quit -batchmode -nographics -silent-crashes -logfile log.log -buildTarget StandaloneWindows64 /headless /ScriptBackend mono -projectPath C:/git/cysharp/MemoryPack/src/MemoryPack.Unity -executeMethod UnitTestBuilder.BuildUnitTest"
+    },
+    "UnityBuildRunner (env)": {
+      "commandName": "Project",
+      "commandLineArgs": "-quit -batchmode -nographics -silent-crashes -logfile log.log -buildTarget StandaloneWindows64 /headless /ScriptBackend mono -projectPath C:/git/cysharp/MemoryPack/src/MemoryPack.Unity -executeMethod UnitTestBuilder.BuildUnitTest",
       "environmentVariables": {
-        "UnityPath": "C:\\Program Files\\Unity\\Hub\\Editor\\2018.3.13f1\\Editor\\Unity.exe"
+        "UnityPath": "C:\\Program Files\\Unity\\Hub\\Editor\\2021.3.11f1\\Editor\\Unity.exe"
       }
     }
   }
