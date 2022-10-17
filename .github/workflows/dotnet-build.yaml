@@ -1,0 +1,27 @@
+name: dotnet-build
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches:
+      - "main"
+
+env:
+  DOTNET_BUILD_CONFIG: Debug
+
+jobs:
+  build-dotnet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v3
+      - uses: guitarrapc/actions/.github/actions/setup-dotnet@main
+        with:
+          dotnet-version: |
+            6.0.x
+      - name: Build
+        run: dotnet build UnityBuildRunner.sln -c ${{ env.DOTNET_BUILD_CONFIG }}
+      - name: Test
+        run: dotnet test UnityBuildRunner.sln --no-build -c ${{ env.DOTNET_BUILD_CONFIG }} --logger GitHubActions --logger console;verbosity=normal
