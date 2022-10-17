@@ -1,6 +1,6 @@
 ## UnityBuildRunner
 
-[![CircleCI](https://circleci.com/gh/guitarrapc/UnityBuildRunner.svg?style=svg)](https://circleci.com/gh/guitarrapc/UnityBuildRunner) [![codecov](https://codecov.io/gh/guitarrapc/UnityBuildRunner/branch/master/graph/badge.svg)](https://codecov.io/gh/guitarrapc/UnityBuildRunner) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) 
+[![dotnet-build](https://github.com/guitarrapc/UnityBuildRunner/actions/workflows/dotnet-build.yaml/badge.svg)](https://github.com/guitarrapc/UnityBuildRunner/actions/workflows/dotnet-build.yaml) [![release](https://github.com/guitarrapc/UnityBuildRunner/actions/workflows/dotnet-release.yaml/badge.svg)](https://github.com/guitarrapc/UnityBuildRunner/actions/workflows/dotnet-release.yaml)
 
 [![NuGet](https://img.shields.io/nuget/v/UnityBuildRunner.Core.svg?label=UnityBuildRunner.Core%20nuget)](https://www.nuget.org/packages/UnityBuildRunner.Core) [![NuGet](https://img.shields.io/nuget/v/UnityBuildRunner.svg?label=UnityBuildRunner%20nuget)](https://www.nuget.org/packages/UnityBuildRunner)
 
