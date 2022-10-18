@@ -27,7 +27,7 @@ public record Settings(string[] Args, string ArgumentString, string UnityPath, s
         }
 
         var arguments = args.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
-        var argumentString = string.Join(" ", arguments.Select(s => s.First() == '-' ? s : "\"" + Regex.Replace(s, @"(\\+)$", @"$1$1") + "\""));
+        var argumentString = string.Join(" ", arguments.Select(s => s.First() == '-' ? s : "\"" + s + "\""));
 
         return new Settings(arguments, argumentString, unityPathFixed, logFilePath);
     }
