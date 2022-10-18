@@ -10,33 +10,29 @@ public interface ISettings
     string ArgumentString { get; }
     string UnityPath { get; }
     string LogFilePath { get;}
-
-    void Parse(string[] args, string unityPath);
-    string GetLogFile(string[] args);
 }
 
-public class Settings : ISettings
+public record Settings(string[] Args, string ArgumentString, string UnityPath, string LogFilePath) : ISettings
 {
-    public string[] Args { get; private set; }
-    public string ArgumentString { get; private set; }
-    public string UnityPath { get; private set; }
-    public string LogFilePath { get; private set; }
-
-    public void Parse(string[] args, string unityPath)
+    public static Settings Parse(string[] args, string unityPath)
     {
-        UnityPath = !string.IsNullOrWhiteSpace(unityPath) ? unityPath : Environment.GetEnvironmentVariable(nameof(UnityPath));
-        LogFilePath = GetLogFile(args);
+        var unityPathFixed = !string.IsNullOrWhiteSpace(unityPath) ? unityPath : Environment.GetEnvironmentVariable(nameof(UnityPath)) ?? throw new ArgumentNullException("Unity Path not specified. Please specify via argument or Environment Variable.");
+
+        var logFilePath = GetLogFile(args);
         // fallback logfilePath
-        if (string.IsNullOrWhiteSpace(LogFilePath))
+        if (string.IsNullOrWhiteSpace(logFilePath))
         {
-            LogFilePath = "unitybuild.log";
-            args = args.Concat(new[] { "-logFile", "unitybuild.log" }).ToArray();
+            logFilePath = "unitybuild.log";
+            args = args.Concat(new[] { "-logFile", logFilePath }).ToArray();
         }
-        Args = args.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
-        ArgumentString = string.Join(" ", Args.Select(s => s.First() == '-' ? s : "\"" + Regex.Replace(s, @"(\\+)$", @"$1$1") + "\""));
+
+        var arguments = args.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+        var argumentString = string.Join(" ", arguments.Select(s => s.First() == '-' ? s : "\"" + Regex.Replace(s, @"(\\+)$", @"$1$1") + "\""));
+
+        return new Settings(arguments, argumentString, unityPathFixed, logFilePath);
     }
 
-    public string GetLogFile(string[] args)
+    public static string GetLogFile(string[] args)
     {
         var logFile = "";
         for (var i = 0; i < args.Length; i++)

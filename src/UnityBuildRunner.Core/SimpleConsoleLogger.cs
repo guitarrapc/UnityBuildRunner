@@ -40,7 +40,7 @@ public class SimpleConsoleLogger<T> : ILogger<T>
         return true;
     }
 
-    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
         if (formatter == null) throw new ArgumentNullException(nameof(formatter));
 
@@ -52,7 +52,7 @@ public class SimpleConsoleLogger<T> : ILogger<T>
             Console.WriteLine(msg);
         }
 
-        if (exception != null)
+        if (exception is not null)
         {
             Console.WriteLine(exception.ToString());
         }

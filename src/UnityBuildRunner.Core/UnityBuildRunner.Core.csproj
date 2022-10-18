@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>netcoreapp6.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
     
     <Version>1.0.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>

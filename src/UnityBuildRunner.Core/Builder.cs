@@ -61,6 +61,10 @@ public class Builder : IBuilder
         }))
         {
             logger.LogInformation("Unity Build Started.");
+            if (p is null)
+            {
+                throw new ArgumentNullException("Process object is null. Somthing blocking create process.");
+            }
 
             while (!File.Exists(settings.LogFilePath) && !p.HasExited)
             {

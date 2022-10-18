@@ -3,74 +3,77 @@ using System;
 using System.Linq;
 using Xunit;
 
-namespace UnityBuildRunner.Core.Tests
+namespace UnityBuildRunner.Core.Tests;
+
+public class SettingsUnitTests
 {
-    public class SettingsUnitTests
+    private readonly string _unityPath = @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe";
+
+    [Theory]
+    [InlineData(@"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe")]
+    [InlineData(@"C:\Program Files\Unity\Hub\2017.2.2p2\Editor\Unity.exe")]
+    public void UnityPathCanReadFromArguments(string unityPath)
     {
-        [Theory]
-        [InlineData("UnityPath", @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe")]
-        [InlineData("UnityPath", @"C:\Program Files\Unity\Hub\2017.2.2p2\Editor\Unity.exe")]
-        public void IsEnvironmentVariableExists(string envName, string unityPath)
-        {
-            Environment.SetEnvironmentVariable(envName, unityPath, EnvironmentVariableTarget.Process);
-            Environment.GetEnvironmentVariable(envName).Should().NotBeNull();
+        ISettings settings = Settings.Parse(Array.Empty<string>(), unityPath);
+        settings.UnityPath.Should().Be(unityPath);
+    }
 
-            ISettings settings = new Settings();
-            settings.Parse(Array.Empty<string>(), "");
-            settings.UnityPath.Should().Be(unityPath);
+    [Theory]
+    [InlineData("UnityPath", @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe")]
+    [InlineData("UnityPath", @"C:\Program Files\Unity\Hub\2017.2.2p2\Editor\Unity.exe")]
+    public void UnityPathCanReadFromEnvironment(string envName, string unityPath)
+    {
+        Environment.SetEnvironmentVariable(envName, unityPath, EnvironmentVariableTarget.Process);
+        Environment.GetEnvironmentVariable(envName).Should().NotBeNull();
 
-            Environment.SetEnvironmentVariable(envName, null, EnvironmentVariableTarget.Process);
-        }
+        ISettings settings = Settings.Parse(Array.Empty<string>(), "");
+        settings.UnityPath.Should().Be(unityPath);
 
-        [Theory]
-        [InlineData("hoge", @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe")]
-        [InlineData("fuga", @"C:\Program Files\Unity\Hub\2017.2.2p2\Editor\Unity.exe")]
-        public void IsEnvironmentVariableNotExists(string envName, string unityPath)
-        {
-            Environment.SetEnvironmentVariable(envName, unityPath, EnvironmentVariableTarget.Process);
-            Environment.GetEnvironmentVariable(envName).Should().NotBeNull();
+        Environment.SetEnvironmentVariable(envName, null, EnvironmentVariableTarget.Process);
+    }
 
-            ISettings settings = new Settings();
-            settings.Parse(Array.Empty<string>(), "");
-            settings.UnityPath.Should().NotBe(unityPath);
-            settings.LogFilePath.Should().Be("unitybuild.log");
+    [Theory]
+    [InlineData("hoge", @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe")]
+    [InlineData("fuga", @"C:\Program Files\Unity\Hub\2017.2.2p2\Editor\Unity.exe")]
+    public void UnityPathMissingShouldThrow(string envName, string unityPath)
+    {
+        Environment.SetEnvironmentVariable(envName, unityPath, EnvironmentVariableTarget.Process);
+        Environment.GetEnvironmentVariable(envName).Should().NotBeNull();
 
-            Environment.SetEnvironmentVariable(envName, null, EnvironmentVariableTarget.Process);
-        }
+        Assert.Throws<ArgumentNullException>(() => Settings.Parse(Array.Empty<string>(), ""));
 
-        [Theory]
-        [InlineData(new[] { "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", "-logfile", "build.log" }, "build.log")]
-        [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite" }, "hoge.log")]
-        public void ParseLogfile(string[] args, string logfile)
-        {
-            ISettings settings = new Settings();
-            settings.Parse(args, "");
-            var log = settings.GetLogFile(args);
-            log.Should().Be(logfile);
-            settings.LogFilePath.Should().Be(logfile);
-        }
+        Environment.SetEnvironmentVariable(envName, null, EnvironmentVariableTarget.Process);
+    }
 
-        [Theory]
-        [InlineData(new[] { "-bathmode", "", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", "-logfile", "build.log" }, new[] { "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", "-logfile", "build.log" })]
-        [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", " " }, new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite" })]
-        [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", " ", "HogemogeProject", "-executeMethod", "MethodName", "-quite" }, new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite" })]
-        [InlineData(new[] { "-bathmode", "-nographics", "-projectpath", " ", "HogemogeProject", "-executeMethod", "MethodName", "-quite" }, new[] { "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", "-logFile", "unitybuild.log" })]
-        public void ArgsShouldNotContainNullOrWhiteSpace(string[] actual, string[] expected)
-        {
-            ISettings settings = new Settings();
-            settings.Parse(actual, "");
-            settings.Args.SequenceEqual(expected).Should().BeTrue();
-        }
+    [Theory]
+    [InlineData(new[] { "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", "-logfile", "build.log" }, "build.log")]
+    [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite" }, "hoge.log")]
+    public void ParseLogfile(string[] args, string logfile)
+    {
+        ISettings settings = Settings.Parse(args, _unityPath);
+        var log = Settings.GetLogFile(args);
+        log.Should().Be(logfile);
+        settings.LogFilePath.Should().Be(logfile);
+    }
 
-        [Theory]
-        [InlineData(new[] { "-bathmode", "", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", "-logfile", "build.log" }, "-bathmode -nographics -projectpath \"HogemogeProject\" -executeMethod \"MethodName\" -quite -logfile \"build.log\"")]
-        [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", " " }, "-logfile \"hoge.log\" -bathmode -nographics -projectpath \"HogemogeProject\" -executeMethod \"MethodName\" -quite" )]
-        [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", " ", "HogemogeProject", "-executeMethod", "MethodName", "-quite" }, "-logfile \"hoge.log\" -bathmode -nographics -projectpath \"HogemogeProject\" -executeMethod \"MethodName\" -quite")]
-        public void ArgsumentStringShouldFormated(string[] actual, string expected)
-        {
-            ISettings settings = new Settings();
-            settings.Parse(actual, "");
-            settings.ArgumentString.Should().Be(expected);
-        }
+    [Theory]
+    [InlineData(new[] { "-bathmode", "", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", "-logfile", "build.log" }, new[] { "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", "-logfile", "build.log" })]
+    [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", " " }, new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite" })]
+    [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", " ", "HogemogeProject", "-executeMethod", "MethodName", "-quite" }, new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite" })]
+    [InlineData(new[] { "-bathmode", "-nographics", "-projectpath", " ", "HogemogeProject", "-executeMethod", "MethodName", "-quite" }, new[] { "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", "-logFile", "unitybuild.log" })]
+    public void ArgsShouldNotContainNullOrWhiteSpace(string[] actual, string[] expected)
+    {
+        ISettings settings = Settings.Parse(actual, _unityPath);
+        settings.Args.SequenceEqual(expected).Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData(new[] { "-bathmode", "", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", "-logfile", "build.log" }, "-bathmode -nographics -projectpath \"HogemogeProject\" -executeMethod \"MethodName\" -quite -logfile \"build.log\"")]
+    [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite", " " }, "-logfile \"hoge.log\" -bathmode -nographics -projectpath \"HogemogeProject\" -executeMethod \"MethodName\" -quite" )]
+    [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", " ", "HogemogeProject", "-executeMethod", "MethodName", "-quite" }, "-logfile \"hoge.log\" -bathmode -nographics -projectpath \"HogemogeProject\" -executeMethod \"MethodName\" -quite")]
+    public void ArgsumentStringShouldFormated(string[] actual, string expected)
+    {
+        ISettings settings = Settings.Parse(actual, _unityPath);
+        settings.ArgumentString.Should().Be(expected);
     }
 }
