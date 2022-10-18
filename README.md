@@ -74,8 +74,7 @@ UnityBuildRunner -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "
 ### Library
 
 ```csharp
-ISettings settings = new Settings();
-settings.Parse(args, "path/to/unity/exe");
+ISettings settings = Settings.Parse(args, "path/to/unity/exe");
 IBuilder builder = new Builder();
 builder.BuildAsync(settings, TimeSpan.FromMinutes(30));
 ```
