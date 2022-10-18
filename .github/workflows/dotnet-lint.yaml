@@ -1,0 +1,10 @@
+name: dotnet lint
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 1 * * 1 # At AM10:00 JST on Monday
+
+jobs:
+  lint_csharp:
+    uses: guitarrapc/actions/.github/workflows/reusable-dotnet-lint.yaml@main
