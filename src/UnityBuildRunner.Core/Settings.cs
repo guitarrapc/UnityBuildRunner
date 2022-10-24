@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace UnityBuildRunner.Core;
 
@@ -9,7 +8,7 @@ public interface ISettings
     string[] Args { get; }
     string ArgumentString { get; }
     string UnityPath { get; }
-    string LogFilePath { get;}
+    string LogFilePath { get; }
 }
 
 public record Settings(string[] Args, string ArgumentString, string UnityPath, string LogFilePath) : ISettings
