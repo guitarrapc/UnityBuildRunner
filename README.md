@@ -40,17 +40,17 @@ Options:
 
 ## Basic
 
-Only you need to do is pass unity's path as `-u UnityPath` with unity build cli argements as normal.
+All you need to do is pass unity's path as `-u UnityPath` and leave other argments as is.
 
 > [Unity \- Manual: Command line arguments](https://docs.unity3d.com/2018.3/Documentation/Manual/CommandLineArguments.html)
 
-If you are running like this.
+If you are running Unity batch build like this.
 
 ```bash
 "C:\Program Files\UnityApplications\2017.2.2p2\Editor\Unity.exe" -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\workspace\Source\Repos\MRTKSample\Unity" -logfile "log.log" -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
 ```
 
-Just apending `UnityBuildRunner --unity-path ` to existing command is all what you need to do.
+Then, append `UnityBuildRunner --unity-path ` to existing command, that's all.
 
 ```bash
 UnityBuildRunner --unity-path "C:\Program Files\UnityApplications\2017.2.2p2\Editor\Unity.exe" -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\workspace\Source\Repos\MRTKSample\Unity" -logfile "log.log" -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
@@ -58,10 +58,12 @@ UnityBuildRunner --unity-path "C:\Program Files\UnityApplications\2017.2.2p2\Edi
 
 ## Specifying UnityPath
 
-There 2 choice to pass unity app's path.
+You can pass Unity Path via Argument or EnvironmentVariables.
 
-1. Argument: Pass unity path with argument `--unity-path <PATH_TO_UNITY>`  or `-u <PATH_TO_UNITY>`.
-1. Environment Variable: Set Environment Variable `UnityPath`. UnityBuildRunner automatically load it if argument is not specified.
+1. Argument: Add argument `--unity-path <PATH_TO_UNITY>` (or `-u <PATH_TO_UNITY>` for short parameter).
+1. Environment Variable: Set `UnityPath` Environment Variable. UnityBuildRunner automatically load it if argument is not specified.
+
+**Examples**
 
 Pass Unity Path via Argument `--unity-path`.
 
@@ -77,6 +79,8 @@ UnityBuildRunner -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "
 ```
 
 ## Library
+
+You can use this library as your tool chain.
 
 ```csharp
 ISettings settings = Settings.Parse(args, "path/to/unity/exe");
