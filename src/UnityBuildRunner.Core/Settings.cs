@@ -19,11 +19,6 @@ public record Settings(string[] Args, string ArgumentString, string UnityPath, s
         // Unity Path
         var unityPathFixed = !string.IsNullOrWhiteSpace(unityPath) ? unityPath : Environment.GetEnvironmentVariable(nameof(UnityPath)) ?? throw new ArgumentNullException("Unity Path not specified. Please specify via argument or Environment Variable.");
 
-        if (!File.Exists(unityPath))
-        {
-            throw new FileNotFoundException(unityPath);
-        }
-
         var logFilePath = GetLogFile(args);
         // fallback logfilePath
         if (string.IsNullOrWhiteSpace(logFilePath))
