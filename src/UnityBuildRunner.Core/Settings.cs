@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 
 namespace UnityBuildRunner.Core;
@@ -15,6 +16,7 @@ public record Settings(string[] Args, string ArgumentString, string UnityPath, s
 {
     public static Settings Parse(string[] args, string unityPath)
     {
+        // Unity Path
         var unityPathFixed = !string.IsNullOrWhiteSpace(unityPath) ? unityPath : Environment.GetEnvironmentVariable(nameof(UnityPath)) ?? throw new ArgumentNullException("Unity Path not specified. Please specify via argument or Environment Variable.");
 
         var logFilePath = GetLogFile(args);
