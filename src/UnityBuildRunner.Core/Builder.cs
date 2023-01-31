@@ -38,7 +38,7 @@ public class Builder : IBuilder
     {
         // validate
         if (string.IsNullOrWhiteSpace(settings.UnityPath))
-            throw new ArgumentException($"Please pass Unity Executable path with argument `unityPath` or environment variable `{nameof(settings.UnityPath)}`.");
+            throw new ArgumentException($"Please pass Unity Executable path with argument `--unity-path` or environment variable `{nameof(settings.UnityPath)}`.");
         if (!File.Exists(settings.UnityPath))
             throw new FileNotFoundException($"Can not find specified path of {nameof(settings.UnityPath)}: {settings.UnityPath}");
         if (string.IsNullOrEmpty(settings.LogFilePath))
@@ -101,8 +101,7 @@ public class Builder : IBuilder
             catch (Exception ex)
             {
                 p.Kill();
-                logger.LogCritical(ex, $"Unity Build unexpectedly finished. exitcode: {p.ExitCode}, error message: {ex.Message}");
-                throw;
+                logger.LogCritical(ex, $"Unity Build unexpectedly finished. error message: {ex.Message}");
             }
 
             if (p.ExitCode == 0)
@@ -111,7 +110,7 @@ public class Builder : IBuilder
             }
             else
             {
-                logger.LogError($"Unity Build finished : Error happens. exitcode: {p.ExitCode}");
+                logger.LogInformation($"Unity Build finished : Error happens. exitcode: {p.ExitCode}");
             }
             return p.ExitCode;
         }
