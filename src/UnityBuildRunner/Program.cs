@@ -30,7 +30,7 @@ public class UnityBuildRunnerCommand : ConsoleAppBase
     }
 
     [RootCommand]
-    public async Task Full([Option("-u", "Full Path to the Unity.exe (Can use 'UnityPath' Environment variables instead.)")] string unityPath = "", [Option("-t")] string timeout = defaultTimeout)
+    public async Task<int> Full([Option(0, "Full Path to the Unity.exe (Can use 'UnityPath' Environment variables instead.)")] string unityPath = "", [Option(1, $"Timeout to terminate execution within. default: \"{defaultTimeout}\"")] string timeout = defaultTimeout)
     {
         var arguments = Context.Arguments
             .Except(new[] { "--timeout", "-t", timeout });
@@ -45,9 +45,13 @@ public class UnityBuildRunnerCommand : ConsoleAppBase
             var settings = Settings.Parse(args!, unityPath);
             var timeoutSpan = TimeSpan.TryParse(timeout, out var r) ? r : TimeSpan.FromMinutes(60);
 
-            logger.LogInformation("Begin Unity Build.");
-            await builder.BuildAsync(settings, timeoutSpan);
-            logger.LogInformation("End Unity Build.");
+            logger.LogInformation("Start building Unity.");
+            return await builder.BuildAsync(settings, timeoutSpan);
+        }
+        else
+        {
+            logger.LogInformation($"No valid argument found, exiting without do nothing. {arguments}");
+            return 1;
         }
     }
 }
