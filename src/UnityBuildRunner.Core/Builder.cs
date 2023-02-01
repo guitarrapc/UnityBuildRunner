@@ -17,7 +17,7 @@ public interface IBuilder
 public class Builder : IBuilder
 {
     private static readonly RegexOptions regexOptions = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline;
-    private static readonly string[] errorFilter = new[]
+    private static readonly string[] errorFilters = new[]
     {
         "compilationhadfailure: True",
         "DisplayProgressNotification: Build Failed",
@@ -164,11 +164,11 @@ public class Builder : IBuilder
 
     public void ErrorFilter(string txt)
     {
-        foreach (var error in errorFilter)
+        foreach (var errorFilter in errorFilters)
         {
-            if (Regex.IsMatch(txt, error, regexOptions))
+            if (Regex.IsMatch(txt, errorFilter, regexOptions))
             {
-                throw new OperationCanceledException($"ErrorFilter catched specific build error: {error}");
+                throw new OperationCanceledException($"ErrorFilter found specific build error. stdout: '{txt}'. filter: {errorFilter}");
             }
         }
     }
