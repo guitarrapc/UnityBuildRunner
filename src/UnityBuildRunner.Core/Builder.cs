@@ -52,68 +52,66 @@ public class Builder : IBuilder
         var stopwatch = Stopwatch.StartNew();
 
         // Build
-        using (var p = Process.Start(new ProcessStartInfo()
+        using var p = Process.Start(new ProcessStartInfo()
         {
             FileName = settings.UnityPath,
             Arguments = settings.ArgumentString,
             UseShellExecute = false,
             CreateNoWindow = true,
-        }))
+        });
+        logger.LogInformation("Unity Build Started.");
+        if (p is null)
         {
-            logger.LogInformation("Unity Build Started.");
-            if (p is null)
-            {
-                throw new ArgumentNullException("Process object is null. Somthing blocking create process.");
-            }
+            throw new ArgumentNullException("Process object is null. Somthing blocking create process.");
+        }
 
-            while (!File.Exists(settings.LogFilePath) && !p.HasExited)
-            {
-                await Task.Delay(TimeSpan.FromMilliseconds(10));
-            }
-            if (p.HasExited)
-            {
-                logger.LogCritical($"Unity process started but build unexpectedly finished before began build. exitcode: {p.ExitCode}");
-                return p.ExitCode;
-            }
-
-            try
-            {
-                using (var file = File.Open(settings.LogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                using (var reader = new StreamReader(file))
-                {
-                    while (!p.HasExited)
-                    {
-                        if (stopwatch.Elapsed.TotalMilliseconds > timeout.TotalMilliseconds)
-                        {
-                            p.Kill();
-                            logger.LogError($"Timeout exceeded. Timeout {timeout.TotalMinutes}min has been passed since begin.");
-                            stopwatch.Stop();
-                        }
-
-                        ReadLog(reader);
-                        await Task.Delay(TimeSpan.FromMilliseconds(500));
-                    }
-
-                    await Task.Delay(TimeSpan.FromMilliseconds(500));
-                    ReadLog(reader);
-                }
-            }
-            catch (Exception ex)
-            {
-                p.Kill();
-                logger.LogCritical(ex, $"Unity Build unexpectedly finished. error message: {ex.Message}");
-            }
-
-            if (p.ExitCode == 0)
-            {
-                logger.LogInformation($"Unity Build finished : Success. exitcode: {p.ExitCode}");
-            }
-            else
-            {
-                logger.LogInformation($"Unity Build finished : Error happens. exitcode: {p.ExitCode}");
-            }
+        while (!File.Exists(settings.LogFilePath) && !p.HasExited)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(10));
+        }
+        if (p.HasExited)
+        {
+            logger.LogCritical($"Unity process started but build unexpectedly finished before began build. exitcode: {p.ExitCode}");
             return p.ExitCode;
         }
+
+        try
+        {
+            using (var file = File.Open(settings.LogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var reader = new StreamReader(file))
+            {
+                while (!p.HasExited)
+                {
+                    if (stopwatch.Elapsed.TotalMilliseconds > timeout.TotalMilliseconds)
+                    {
+                        p.Kill();
+                        logger.LogError($"Timeout exceeded. Timeout {timeout.TotalMinutes}min has been passed since begin.");
+                        stopwatch.Stop();
+                    }
+
+                    ReadLog(reader);
+                    await Task.Delay(TimeSpan.FromMilliseconds(500));
+                }
+
+                await Task.Delay(TimeSpan.FromMilliseconds(500));
+                ReadLog(reader);
+            }
+        }
+        catch (Exception ex)
+        {
+            p.Kill();
+            logger.LogCritical(ex, $"Unity Build unexpectedly finished. error message: {ex.Message}");
+        }
+
+        if (p.ExitCode == 0)
+        {
+            logger.LogInformation($"Unity Build finished : Success. exitcode: {p.ExitCode}");
+        }
+        else
+        {
+            logger.LogInformation($"Unity Build finished : Error happens. exitcode: {p.ExitCode}");
+        }
+        return p.ExitCode;
     }
 
     public async Task InitializeAsync(string path)
