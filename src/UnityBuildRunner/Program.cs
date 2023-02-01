@@ -36,7 +36,7 @@ public class UnityBuildRunnerCommand : ConsoleAppBase
             .Except(new[] { "--timeout", "-t", timeout });
         if (!string.IsNullOrEmpty(unityPath))
         {
-            arguments = arguments.Except(new[] { "--unity-path", "-u", unityPath });
+            arguments = arguments.Except(new[] { "--unity-path", unityPath });
         }
 
         if (arguments is not null && arguments.Any())
