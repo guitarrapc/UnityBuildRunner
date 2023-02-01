@@ -41,15 +41,14 @@ public class UnityBuildRunnerCommand : ConsoleAppBase
 
         if (arguments is not null && arguments.Any())
         {
-            var args = arguments.ToArray();
-            var settings = Settings.Parse(args!, unityPath);
+            var settings = Settings.Parse(arguments.ToArray()!, unityPath);
             var timeoutSpan = TimeSpan.TryParse(timeout, out var r) ? r : TimeSpan.FromMinutes(60);
 
             return await builder.BuildAsync(settings, timeoutSpan);
         }
         else
         {
-            logger.LogError($"No valid argument found, exiting. You have specified arguments: {arguments}");
+            logger.LogError($"No valid argument found, exiting. You have specified arguments: {string.Join(" ", arguments?.ToArray() ?? Array.Empty<string>())}");
             return 1;
         }
     }
