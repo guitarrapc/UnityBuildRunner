@@ -30,7 +30,7 @@ public class UnityBuildRunnerCommand : ConsoleAppBase
     }
 
     [RootCommand]
-    public async Task<int> Full([Option(0, "Full Path to the Unity.exe (Can use 'UnityPath' Environment variables instead.)")] string unityPath = "", [Option(1, $"Timeout to terminate execution within. default: \"{defaultTimeout}\"")] string timeout = defaultTimeout)
+    public async Task<int> Full([Option("--unity-path", "Full Path to the Unity.exe (Can use 'UnityPath' Environment variables instead.)")] string unityPath = "", [Option("--timeout", $"Timeout to terminate execution within. default: \"{defaultTimeout}\"")] string timeout = defaultTimeout)
     {
         var arguments = Context.Arguments
             .Except(new[] { "--timeout", "-t", timeout });
