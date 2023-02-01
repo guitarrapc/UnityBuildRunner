@@ -36,100 +36,117 @@ public class Builder : IBuilder
 
     public async Task<int> BuildAsync(ISettings settings, TimeSpan timeout)
     {
+        logger.LogInformation($"Preparing Unity Build.");
+
         // validate
         if (string.IsNullOrWhiteSpace(settings.UnityPath))
             throw new ArgumentException($"Please pass Unity Executable path with argument `--unity-path` or environment variable `{nameof(settings.UnityPath)}`.");
         if (!File.Exists(settings.UnityPath))
-            throw new FileNotFoundException($"Can not find specified path of {nameof(settings.UnityPath)}: {settings.UnityPath}");
+            throw new FileNotFoundException($"{nameof(settings.UnityPath)} not found.{settings.UnityPath}");
         if (string.IsNullOrEmpty(settings.LogFilePath))
-            throw new ArgumentException("Missing '-logFile filename' argument. Make sure you have target any build log file path.");
+            throw new ArgumentException("Missing '-logFile filename' argument. Make sure you had targeted any log file path.");
 
         // Initialize
-        logger.LogInformation($"Detected LogFile: {settings.LogFilePath}");
+        logger.LogInformation($"Initializing LogFilePath '{settings.LogFilePath}'.");
         await InitializeAsync(settings.LogFilePath);
-        logger.LogInformation($"Command line: {settings.UnityPath} {settings.ArgumentString}");
-
-        var stopwatch = Stopwatch.StartNew();
 
         // Build
-        using (var p = Process.Start(new ProcessStartInfo()
+        logger.LogInformation("Starting Unity Build.");
+        logger.LogInformation($"Command: {settings.UnityPath} {settings.ArgumentString}");
+        var sw = Stopwatch.StartNew();
+        using var process = Process.Start(new ProcessStartInfo()
         {
             FileName = settings.UnityPath,
             Arguments = settings.ArgumentString,
             UseShellExecute = false,
             CreateNoWindow = true,
-        }))
+        });
+
+        if (process is null)
         {
-            logger.LogInformation("Unity Build Started.");
-            if (p is null)
-            {
-                throw new ArgumentNullException("Process object is null. Somthing blocking create process.");
-            }
+            sw.Stop();
+            logger.LogCritical("Could not start Unity. Somthing blocked creating process.");
+            return 1;
+        }
 
-            while (!File.Exists(settings.LogFilePath) && !p.HasExited)
+        try
+        {
+            while (!File.Exists(settings.LogFilePath) && !process.HasExited)
             {
-                await Task.Delay(TimeSpan.FromMilliseconds(10));
-            }
-            if (p.HasExited)
-            {
-                logger.LogCritical($"Unity process started but build unexpectedly finished before began build. exitcode: {p.ExitCode}");
-                return p.ExitCode;
-            }
-
-            try
-            {
-                using (var file = File.Open(settings.LogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                using (var reader = new StreamReader(file))
+                // retry in 10 seconds.
+                if (sw.Elapsed.TotalSeconds < 10 * 1000)
                 {
-                    while (!p.HasExited)
-                    {
-                        if (stopwatch.Elapsed.TotalMilliseconds > timeout.TotalMilliseconds)
-                        {
-                            p.Kill();
-                            logger.LogError($"Timeout exceeded. Timeout {timeout.TotalMinutes}min has been passed since begin.");
-                            stopwatch.Stop();
-                        }
-
-                        ReadLog(reader);
-                        await Task.Delay(TimeSpan.FromMilliseconds(500));
-                    }
-
-                    await Task.Delay(TimeSpan.FromMilliseconds(500));
-                    ReadLog(reader);
+                    await Task.Delay(TimeSpan.FromMilliseconds(10));
+                }
+                else
+                {
+                    process.Kill();
+                    throw new TimeoutException($"Unity Process has been aborted. Waited 10 seconds but could't create logFilePath '{settings.LogFilePath}'.");
                 }
             }
-            catch (Exception ex)
+            if (process.HasExited)
             {
-                p.Kill();
-                logger.LogCritical(ex, $"Unity Build unexpectedly finished. error message: {ex.Message}");
+                throw new OperationCanceledException($"Unity process started but build unexpectedly finished before began build.");
             }
 
-            if (p.ExitCode == 0)
+            using (var file = File.Open(settings.LogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var reader = new StreamReader(file))
             {
-                logger.LogInformation($"Unity Build finished : Success. exitcode: {p.ExitCode}");
+                while (!process.HasExited)
+                {
+                    if (sw.Elapsed.TotalMilliseconds > timeout.TotalMilliseconds)
+                    {
+                        throw new TimeoutException($"Timeout exceeded. Timeout {timeout.TotalMinutes}min has been passed but could not complete.");
+                    }
+
+                    ReadLog(reader);
+                    await Task.Delay(TimeSpan.FromMilliseconds(500));
+                }
+
+                await Task.Delay(TimeSpan.FromMilliseconds(500));
+                ReadLog(reader);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogCritical(ex, $"Unity Build unexpectedly finished. Error message: {ex.Message}");
+            process.Kill();
+        }
+        finally
+        {
+            sw.Stop();
+
+            if (process.ExitCode == 0)
+            {
+                logger.LogInformation($"Unity Build successfully complete. ({process.ExitCode})");
             }
             else
             {
-                logger.LogInformation($"Unity Build finished : Error happens. exitcode: {p.ExitCode}");
+                logger.LogInformation($"Unity Build failed. ({process.ExitCode})");
             }
-            return p.ExitCode;
         }
+        return process.ExitCode;
     }
 
     public async Task InitializeAsync(string path)
     {
         if (!File.Exists(path))
+        {
             return;
-        for (var i = 0; i < 10; i++)
+        }
+
+        // retry 10 times
+        var retry = 10;
+        for (var i = 1; i <= retry; i++)
         {
             try
             {
                 File.Delete(path);
                 break;
             }
-            catch (IOException)
+            catch (IOException) when (i < retry + 1)
             {
-                logger.LogWarning($"Couldn't delete {path}. trying again.({i + 1}/10)");
+                logger.LogWarning($"Couldn't delete file {path}. Retrying again.({i + 1}/{retry})");
                 await Task.Delay(TimeSpan.FromSeconds(1));
                 continue;
             }

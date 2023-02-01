@@ -45,12 +45,11 @@ public class UnityBuildRunnerCommand : ConsoleAppBase
             var settings = Settings.Parse(args!, unityPath);
             var timeoutSpan = TimeSpan.TryParse(timeout, out var r) ? r : TimeSpan.FromMinutes(60);
 
-            logger.LogInformation("Start building Unity.");
             return await builder.BuildAsync(settings, timeoutSpan);
         }
         else
         {
-            logger.LogInformation($"No valid argument found, exiting without do nothing. {arguments}");
+            logger.LogError($"No valid argument found, exiting. You have specified arguments: {arguments}");
             return 1;
         }
     }
