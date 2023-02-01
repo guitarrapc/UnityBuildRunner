@@ -124,6 +124,8 @@ public class Builder : IBuilder
             {
                 logger.LogInformation($"Unity Build failed. ({process.ExitCode})");
             }
+
+            logger.LogInformation($"Elapsed Time {sw.Elapsed}");
         }
         return process.ExitCode;
     }
