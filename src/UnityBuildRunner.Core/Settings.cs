@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 
 namespace UnityBuildRunner.Core;
@@ -9,9 +10,10 @@ public interface ISettings
     string ArgumentString { get; }
     string UnityPath { get; }
     string LogFilePath { get; }
+    string WorkingDirectory { get; }
 }
 
-public record Settings(string[] Args, string ArgumentString, string UnityPath, string LogFilePath) : ISettings
+public record Settings(string[] Args, string ArgumentString, string UnityPath, string LogFilePath, string WorkingDirectory) : ISettings
 {
     public static Settings Parse(string[] args, string unityPath)
     {
@@ -29,7 +31,10 @@ public record Settings(string[] Args, string ArgumentString, string UnityPath, s
         var arguments = args.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
         var argumentString = string.Join(" ", arguments.Select(s => s.First() == '-' ? s : "\"" + s + "\""));
 
-        return new Settings(arguments, argumentString, unityPathFixed, logFilePath);
+        // WorkingDirectory should be cli launch path.
+        var workingDirectory = Directory.GetCurrentDirectory();
+
+        return new Settings(arguments, argumentString, unityPathFixed, logFilePath, workingDirectory);
     }
 
     public static string GetLogFile(string[] args)
