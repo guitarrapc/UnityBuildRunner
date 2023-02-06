@@ -71,6 +71,7 @@ public class Builder : IBuilder
 
         try
         {
+            // wait for log file generated.
             while (!File.Exists(settings.LogFilePath) && !process.HasExited)
             {
                 // retry in 10 seconds.
@@ -80,10 +81,11 @@ public class Builder : IBuilder
                 }
                 else
                 {
-                    process.Kill();
                     throw new TimeoutException($"Unity Process has been aborted. Waited 10 seconds but could't create logFilePath '{settings.LogFilePath}'.");
                 }
             }
+
+            // log file generated but process immediately exited.
             if (process.HasExited)
             {
                 throw new OperationCanceledException($"Unity process started but build unexpectedly finished before began build.");
@@ -92,6 +94,7 @@ public class Builder : IBuilder
             using (var file = File.Open(settings.LogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (var reader = new StreamReader(file))
             {
+                // read logs and redirect to stdout
                 while (!process.HasExited)
                 {
                     if (sw.Elapsed.TotalMilliseconds > timeout.TotalMilliseconds)
@@ -103,6 +106,7 @@ public class Builder : IBuilder
                     await Task.Delay(TimeSpan.FromMilliseconds(500));
                 }
 
+                // read last log
                 await Task.Delay(TimeSpan.FromMilliseconds(500));
                 ReadLog(reader);
             }
@@ -110,7 +114,6 @@ public class Builder : IBuilder
         catch (Exception ex)
         {
             logger.LogCritical(ex, $"Unity Build unexpectedly finished. Error message: {ex.Message}");
-            process.Kill();
         }
         finally
         {
@@ -126,6 +129,13 @@ public class Builder : IBuilder
             }
 
             logger.LogInformation($"Elapsed Time {sw.Elapsed}");
+
+            // Assume exit Unity process
+            if (!process.HasExited)
+            {
+                logger.LogInformation($"Killing unterminated process. ({process.Id})");
+                process.Kill(true);
+            }
         }
         return process.ExitCode;
     }
