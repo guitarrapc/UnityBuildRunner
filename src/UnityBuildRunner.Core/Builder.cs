@@ -53,11 +53,13 @@ public class Builder : IBuilder
         // Build
         logger.LogInformation("Starting Unity Build.");
         logger.LogInformation($"Command: {settings.UnityPath} {settings.ArgumentString}");
+        logger.LogInformation($"WorkingDir: {settings.WorkingDirectory}");
         var sw = Stopwatch.StartNew();
         using var process = Process.Start(new ProcessStartInfo()
         {
             FileName = settings.UnityPath,
             Arguments = settings.ArgumentString,
+            WorkingDirectory = settings.WorkingDirectory,
             UseShellExecute = false,
             CreateNoWindow = true,
         });
