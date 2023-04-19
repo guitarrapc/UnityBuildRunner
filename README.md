@@ -83,8 +83,8 @@ UnityBuildRunner -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "
 You can use this library as your tool chain.
 
 ```csharp
+IBuilder builder = new Builder(logger);
 ISettings settings = Settings.Parse(args, "path/to/unity/exe");
-IBuilder builder = new Builder();
 builder.BuildAsync(settings, TimeSpan.FromMinutes(30));
 ```
 
