@@ -29,6 +29,8 @@ Install-Package UnityBuildRunner.Core
 
 # Usage
 
+You can use this tool via both CLI and Library.
+
 ```
 $ UnityBuildRunner --help
 Usage: full [options...]
@@ -38,7 +40,7 @@ Options:
   -t, --timeout <String>        (Default: 00:60:00)
 ```
 
-## Basic
+## CLI (Basic)
 
 All you need to do is pass unity's path as `-u UnityPath` and leave other argments as is.
 
@@ -56,7 +58,7 @@ Then, append `UnityBuildRunner --unity-path ` to existing command, that's all.
 UnityBuildRunner --unity-path "C:\Program Files\UnityApplications\2017.2.2p2\Editor\Unity.exe" -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\workspace\Source\Repos\MRTKSample\Unity" -logfile "log.log" -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
 ```
 
-## Specifying UnityPath
+## CLI (Specifying UnityPath)
 
 You can pass Unity Path via Argument or EnvironmentVariables.
 
@@ -84,7 +86,7 @@ You can use this library as your tool chain.
 
 ```csharp
 IBuilder builder = new Builder(logger);
-ISettings settings = Settings.Parse(args, "path/to/unity/exe");
+ISettings settings = Settings.Parse(args, @"C:\Program Files\Unity\Hub\Editor\2021.3.11f1\Editor\Unity.exe");
 builder.BuildAsync(settings, TimeSpan.FromMinutes(30));
 ```
 
