@@ -1,9 +1,10 @@
-using System;
+using FluentAssertions;
+using System.Collections.Generic;
 using Xunit;
 
 namespace UnityBuildRunner.Core.Tests;
 
-public class BuilderUnitTest
+public class ErrorFilterTest
 {
     [Theory]
     [InlineData(
@@ -23,32 +24,30 @@ public class BuilderUnitTest
         "Assets/Externals/Plugins/Zenject/Source/Binding/Binders/NonLazyBinder.cs(10,16): error CS0246: The type or namespace name `IfNotBoundBinder' could not be found. Are you missing an assembly reference?",
         @"BatchMode: Unity has not been activated with a valid License. Could be a new activation or renewal...
         DisplayProgressbar: Unity license")]
-    public void ShouldThrowErrorFilter(params string[] inputs)
+    public void ContainsFilterMessage(params string[] inputs)
     {
-        var builder = new Builder(new SimpleConsoleLogger<Builder>());
+        IErrorFilter errorFilter = new DefaultErrorFilter();
+        var results = new List<string>();
         foreach (var input in inputs)
         {
-            Assert.Throws<OperationCanceledException>(() => builder.ErrorFilter(input));
+            errorFilter.Filter(input, result => results.Add(result.MatchPattern));
         }
+
+        results.Should().NotBeEmpty();
     }
 
     [Theory]
     [InlineData(
         "Unloading 64 Unused Serialized files (Serialized files now loaded: 0)",
         "System memory in use before: 63.0 MB.", "DisplayProgressbar: Unity Package Manager")]
-    public void ShouldNotThrowErrorFilter(params string[] inputs)
+    public void NotContainsFilterMessage(params string[] inputs)
     {
-        var builder = new Builder(new SimpleConsoleLogger<Builder>());
+        IErrorFilter errorFilter = new DefaultErrorFilter();
+        var results = new List<string>();
         foreach (var input in inputs)
         {
-            try
-            {
-                builder.ErrorFilter(input);
-            }
-            catch (Exception ex)
-            {
-                Assert.True(false, ex.Message);
-            }
+            errorFilter.Filter(input, result => results.Add(result.MatchPattern));
         }
+        results.Should().BeEmpty();
     }
 }

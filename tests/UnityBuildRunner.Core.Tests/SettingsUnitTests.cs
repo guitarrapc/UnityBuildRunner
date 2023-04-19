@@ -5,7 +5,7 @@ using Xunit;
 
 namespace UnityBuildRunner.Core.Tests;
 
-public class SettingsUnitTests
+public class SettingsTest
 {
     private readonly string _unityPath = @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe";
 
