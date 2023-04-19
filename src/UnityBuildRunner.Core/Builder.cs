@@ -2,36 +2,40 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace UnityBuildRunner.Core;
 
 public interface IBuilder
 {
+    /// <summary>
+    /// Initialize Builder
+    /// </summary>
+    /// <param name="logFilePath">Logfile Path</param>
+    /// <returns></returns>
+    Task InitializeAsync(string logFilePath);
+    /// <summary>
+    /// Run Build
+    /// </summary>
+    /// <param name="settings">UnityBuild settings</param>
+    /// <param name="timeout">Timeout timespan</param>
+    /// <returns>ExitCode</returns>
     Task<int> BuildAsync(ISettings settings, TimeSpan timeout);
-    void ErrorFilter(string txt);
-    Task InitializeAsync(string path);
 }
 
-public class Builder : IBuilder
+public class DefaultBuilder : IBuilder
 {
-    private static readonly RegexOptions regexOptions = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline;
-    private static readonly string[] errorFilters = new[]
+    private readonly ILogger logger;
+    private readonly IErrorFilter? errorFilter;
+
+    public DefaultBuilder(ILogger logger) : this(logger, new DefaultErrorFilter())
     {
-        "compilationhadfailure: True",
-        "DisplayProgressNotification: Build Failed",
-        "Error building Player because scripts had compiler errors",
-        "Compilation failed",
-        @"error CS\d+",
-        "Unity has not been activated",
-    };
+    }
 
-    private readonly ILogger<Builder> logger;
-
-    public Builder(ILogger<Builder> logger)
+    public DefaultBuilder(ILogger logger, IErrorFilter errorFilter)
     {
         this.logger = logger;
+        this.errorFilter = errorFilter;
     }
 
     public async Task<int> BuildAsync(ISettings settings, TimeSpan timeout)
@@ -90,7 +94,7 @@ public class Builder : IBuilder
             // log file generated but process immediately exited.
             if (process.HasExited)
             {
-                throw new OperationCanceledException($"Unity process started but build unexpectedly finished before began build.");
+                throw new OperationCanceledException($"Unity process started but build unexpectedly finished before began.");
             }
 
             using (var file = File.Open(settings.LogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
@@ -101,7 +105,7 @@ public class Builder : IBuilder
                 {
                     if (sw.Elapsed.TotalMilliseconds > timeout.TotalMilliseconds)
                     {
-                        throw new TimeoutException($"Timeout exceeded. Timeout {timeout.TotalMinutes}min has been passed but could not complete.");
+                        throw new TimeoutException($"Timeout exceeded. {timeout.TotalMinutes}min has been passed, stopping build.");
                     }
 
                     ReadLog(reader);
@@ -115,7 +119,7 @@ public class Builder : IBuilder
         }
         catch (Exception ex)
         {
-            logger.LogCritical(ex, $"Unity Build unexpectedly finished. Error message: {ex.Message}");
+            logger.LogCritical(ex, $"Error happen while building Unity. Error message: {ex.Message}");
         }
         finally
         {
@@ -160,7 +164,7 @@ public class Builder : IBuilder
             }
             catch (IOException) when (i < retry + 1)
             {
-                logger.LogWarning($"Couldn't delete file {path}. Retrying again.({i + 1}/{retry})");
+                logger.LogWarning($"Couldn't delete file {path}, retrying... ({i + 1}/{retry})");
                 await Task.Delay(TimeSpan.FromSeconds(1));
                 continue;
             }
@@ -171,19 +175,14 @@ public class Builder : IBuilder
     {
         var txt = reader.ReadToEnd();
         if (string.IsNullOrEmpty(txt))
-            return;
-        logger.LogInformation(txt);
-        ErrorFilter(txt);
-    }
-
-    public void ErrorFilter(string txt)
-    {
-        foreach (var errorFilter in errorFilters)
         {
-            if (Regex.IsMatch(txt, errorFilter, regexOptions))
-            {
-                throw new OperationCanceledException($"ErrorFilter found specific build error. stdout: '{txt}'. filter: {errorFilter}");
-            }
+            return;
         }
+
+        // Output current log.
+        logger.LogInformation(txt);
+
+        // Cancel on when error message found.
+        errorFilter?.Filter(txt, result => throw new OperationCanceledException($"ErrorFilter found specific build error. stdout: '{result.MatchPattern}'. pattern: '{result.MatchPattern}'"));
     }
 }
