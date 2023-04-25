@@ -71,8 +71,7 @@ public class DefaultBuilder : IBuilder
         if (process is null)
         {
             sw.Stop();
-            logger.LogCritical("Could not start Unity. Somthing blocked creating process.");
-            return 1;
+            throw new OperationCanceledException("Could not start Unity. Somthing blocked creating process.");
         }
 
         try
