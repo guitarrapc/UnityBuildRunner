@@ -74,6 +74,9 @@ public class DefaultBuilder : IBuilder
             throw new OperationCanceledException("Could not start Unity. Somthing blocked creating process.");
         }
 
+        var processImmediatelyExit = false; // 9901
+        var timeout = false; // 9902
+        var buildSuccess = false; // 0
         try
         {
             // wait for log file generated.
@@ -86,6 +89,7 @@ public class DefaultBuilder : IBuilder
                 }
                 else
                 {
+                    timeout = true;
                     throw new TimeoutException($"Unity Process has been aborted. Waited 10 seconds but could't create logFilePath '{settings.LogFilePath}'.");
                 }
             }
@@ -93,6 +97,7 @@ public class DefaultBuilder : IBuilder
             // log file generated but process immediately exited.
             if (process.HasExited)
             {
+                processImmediatelyExit = true;
                 throw new OperationCanceledException($"Unity process started but build unexpectedly finished before began.");
             }
 
@@ -104,6 +109,7 @@ public class DefaultBuilder : IBuilder
                 {
                     if (sw.Elapsed.TotalMilliseconds > timeout.TotalMilliseconds)
                     {
+                        timeout = true;
                         throw new TimeoutException($"Timeout exceeded. {timeout.TotalMinutes}min has been passed, stopping build.");
                     }
 
@@ -115,33 +121,40 @@ public class DefaultBuilder : IBuilder
                 await Task.Delay(TimeSpan.FromMilliseconds(500));
                 ReadLog(reader);
             }
+
+            buildSuccess = true;
+            return 0;
         }
         catch (Exception ex)
         {
             logger.LogCritical(ex, $"Error happen while building Unity. Error message: {ex.Message}");
+            if (process is null) return 1;
+            if (processImmediatelyExit) return 9901;
+            if (timeout) return 9902;
         }
         finally
         {
             sw.Stop();
 
-            if (process.ExitCode == 0)
+            if (buildSuccess)
             {
-                logger.LogInformation($"Unity Build successfully complete. ({process.ExitCode})");
+                logger.LogInformation($"Unity Build successfully complete.");
             }
             else
             {
-                logger.LogInformation($"Unity Build failed. ({process.ExitCode})");
+                logger.LogInformation($"Unity Build failed.");
             }
 
             logger.LogInformation($"Elapsed Time {sw.Elapsed}");
 
             // Assume exit Unity process
-            if (!process.HasExited)
+            if (process is not null && !process.HasExited)
             {
                 logger.LogInformation($"Killing unterminated process. ({process.Id})");
                 process.Kill(true);
             }
         }
+
         return process.ExitCode;
     }
 
