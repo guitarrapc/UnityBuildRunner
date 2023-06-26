@@ -7,6 +7,8 @@ internal enum BuildErrorCode
 {
     [ErrorExitCode(0)]
     Success,
+    [ErrorExitCode(1)]
+    UnityProcessError,
     [ErrorExitCode(9900)]
     BuildErrorMessageFound,
     [ErrorExitCode(9901)]
@@ -15,6 +17,10 @@ internal enum BuildErrorCode
     ProcessImmediatelyExit,
     [ErrorExitCode(9903)]
     ProcessTimeout,
+    [ErrorExitCode(9904)]
+    OperationCancelled,
+    [ErrorExitCode(9999)]
+    OtherError,
 }
 
 [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]

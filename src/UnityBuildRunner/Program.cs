@@ -21,7 +21,7 @@ public class UnityBuildRunnerCommand : ConsoleAppBase
     }
 
     [RootCommand]
-    public async Task<int> Run([Option("--unity-path", "Full Path to the Unity.exe (Can use 'UnityPath' Environment variables instead.)")] string unityPath = "", [Option("--timeout", $"Timeout to terminate execution within. default: \"{defaultTimeout}\"")] string timeout = defaultTimeout)
+    public async Task<int> Run([Option("--unity-path", "Full Path to the Unity.exe (Leave empty when use 'UnityPath' Environment variables instead.)")] string unityPath = "", [Option("--timeout", $"Timeout to terminate execution within. default: \"{defaultTimeout}\"")] string timeout = defaultTimeout)
     {
         var arguments = Context.Arguments
             .Except(new[] { "--timeout", "-t", timeout });
@@ -32,10 +32,13 @@ public class UnityBuildRunnerCommand : ConsoleAppBase
 
         if (arguments is not null && arguments.Any())
         {
-            var settings = DefaultSettings.Parse(arguments.ToArray()!, unityPath);
             var timeoutSpan = TimeSpan.TryParse(timeout, out var r) ? r : TimeSpan.FromMinutes(60);
+            var settings = DefaultSettings.Parse(arguments.ToArray()!, unityPath, timeoutSpan);
+            using var cts = settings.CreateCancellationTokenSource(Context.CancellationToken);
+
+            // build
             var builder = new DefaultBuilder(settings, logger);
-            await builder.BuildAsync(timeoutSpan, Context.CancellationToken);
+            await builder.BuildAsync(cts.Token);
             return builder.ExitCode;
         }
         else

@@ -2,19 +2,21 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 namespace UnityBuildRunner.Core;
 
 public interface ISettings
 {
-    string[] Args { get; }
-    string ArgumentString { get; }
-    string UnityPath { get; }
-    string LogFilePath { get; }
-    string WorkingDirectory { get; }
+    string[] Args { get; init; }
+    string ArgumentString { get; init; }
+    string UnityPath { get; init; }
+    string LogFilePath { get; init; }
+    string WorkingDirectory { get; init; }
+    TimeSpan TimeOut { get; init; }
 }
 
-public record DefaultSettings(string[] Args, string ArgumentString, string UnityPath, string LogFilePath, string WorkingDirectory) : ISettings
+public record DefaultSettings(string[] Args, string ArgumentString, string UnityPath, string LogFilePath, string WorkingDirectory, TimeSpan TimeOut) : ISettings
 {
     /// <summary>
     /// Validate Settings is correct.
@@ -30,14 +32,27 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
             throw new FileNotFoundException($"{nameof(UnityPath)} not found. {UnityPath}");
     }
 
+    public CancellationTokenSource CreateCancellationTokenSource(CancellationToken? linkCancellationToken = null)
+    {
+        var timeoutToken = new CancellationTokenSource(TimeOut);
+        if (linkCancellationToken is not null && linkCancellationToken is CancellationToken ct)
+        {
+            return CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutToken.Token);
+        }
+        else
+        { 
+            return timeoutToken;
+        }
+    }
+
     /// <summary>
     /// Parse args and generate Settings.
     /// </summary>
-    public static bool TryParse(string[] args, string unityPath, [NotNullWhen(true)] out DefaultSettings? settings)
+    public static bool TryParse(string[] args, string unityPath, TimeSpan timeout, [NotNullWhen(true)] out DefaultSettings? settings)
     {
         try
         {
-            settings = Parse(args, unityPath);
+            settings = Parse(args, unityPath, timeout);
             return true;
         }
         catch (Exception)
@@ -50,7 +65,7 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
     /// <summary>
     /// Parse args and generate Settings.
     /// </summary>
-    public static DefaultSettings Parse(string[] args, string unityPath)
+    public static DefaultSettings Parse(string[] args, string unityPath, TimeSpan timeout)
     {
         // Unity Path
         var unityPathFixed = !string.IsNullOrWhiteSpace(unityPath) ? unityPath : Environment.GetEnvironmentVariable(nameof(UnityPath)) ?? throw new ArgumentNullException("Unity Path not specified. Please specify via argument or Environment Variable.");
@@ -70,7 +85,7 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
         var workingDirectory = Directory.GetCurrentDirectory();
 
         // Create settings and validate
-        var settings = new DefaultSettings(arguments, argumentString, unityPathFixed, logFilePath, workingDirectory);
+        var settings = new DefaultSettings(arguments, argumentString, unityPathFixed, logFilePath, workingDirectory, timeout);
         settings.Validate();
 
         return settings;
