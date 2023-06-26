@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace UnityBuildRunner.Core;
@@ -9,40 +10,43 @@ namespace UnityBuildRunner.Core;
 public interface IBuilder
 {
     /// <summary>
-    /// Initialize Builder
+    /// Initialize Builder before build.
     /// </summary>
-    /// <param name="logFilePath">Logfile Path</param>
+    /// <param name="logFilePath"></param>
+    /// <param name="ct"></param>
     /// <returns></returns>
-    Task InitializeAsync(string logFilePath);
+    Task InitializeAsync(string logFilePath, CancellationToken ct);
     /// <summary>
-    /// Run Build
+    /// Run build.
     /// </summary>
-    /// <param name="settings">UnityBuild settings</param>
-    /// <param name="timeout">Timeout timespan</param>
-    /// <returns>ExitCode</returns>
-    Task<int> BuildAsync(ISettings settings, TimeSpan timeout);
+    /// <param name="timeout"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    Task<int> BuildAsync(TimeSpan timeout, CancellationToken ct);
 }
 
 public class DefaultBuilder : IBuilder
 {
+    private readonly ISettings settings;
     private readonly ILogger logger;
     private readonly IErrorFilter? errorFilter;
 
-    public DefaultBuilder(ILogger logger) : this(logger, new DefaultErrorFilter())
+    public DefaultBuilder(ISettings settings, ILogger logger) : this(settings, logger, new DefaultErrorFilter())
     {
     }
 
-    public DefaultBuilder(ILogger logger, IErrorFilter errorFilter)
+    public DefaultBuilder(ISettings settings, ILogger logger, IErrorFilter errorFilter)
     {
+        this.settings = settings;
         this.logger = logger;
         this.errorFilter = errorFilter;
     }
 
-    public async Task<int> BuildAsync(ISettings settings, TimeSpan timeout)
+    public async Task<int> BuildAsync(TimeSpan timeout, CancellationToken ct = default)
     {
         // Initialize
         logger.LogInformation($"Initializing LogFilePath '{settings.LogFilePath}'.");
-        await InitializeAsync(settings.LogFilePath);
+        await InitializeAsync(settings.LogFilePath, ct).ConfigureAwait(false);
 
         // Build
         logger.LogInformation("Starting Unity Build.");
@@ -75,7 +79,7 @@ public class DefaultBuilder : IBuilder
                 // retry in 10 seconds.
                 if (sw.Elapsed.TotalSeconds < 10 * 1000)
                 {
-                    await Task.Delay(TimeSpan.FromMilliseconds(10));
+                    await Task.Delay(TimeSpan.FromMilliseconds(10), ct).ConfigureAwait(false);
                 }
                 else
                 {
@@ -104,13 +108,18 @@ public class DefaultBuilder : IBuilder
                     }
 
                     ReadLog(reader);
-                    await Task.Delay(TimeSpan.FromMilliseconds(500));
+                    await Task.Delay(TimeSpan.FromMilliseconds(500), ct).ConfigureAwait(false);
                 }
 
                 // read last log
-                await Task.Delay(TimeSpan.FromMilliseconds(500));
+                await Task.Delay(TimeSpan.FromMilliseconds(500), ct).ConfigureAwait(false);
                 ReadLog(reader);
             }
+        }
+        catch (OperationCanceledException)
+        {
+            logger.LogInformation("User cancel detected, build canceled.");
+            // no error on CancellationToken cancel.
         }
         catch (Exception ex)
         {
@@ -142,9 +151,9 @@ public class DefaultBuilder : IBuilder
         return exitCode.GetAttrubute<ErrorExitCodeAttribute>()?.ExitCode ?? 0;
     }
 
-    public async Task InitializeAsync(string logFilePath)
+    public async Task InitializeAsync(string logFilePath, CancellationToken ct)
     {
-        await AssumeLogFileInitialized(logFilePath).ConfigureAwait(false);
+        await AssumeLogFileInitialized(logFilePath, ct).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -152,26 +161,33 @@ public class DefaultBuilder : IBuilder
     /// </summary>
     /// <param name="logFilePath"></param>
     /// <returns></returns>
-    public async Task AssumeLogFileInitialized(string logFilePath)
+    private async Task AssumeLogFileInitialized(string logFilePath, CancellationToken ct)
     {
-        if (!File.Exists(logFilePath))
+        try
         {
-            return;
+            if (!File.Exists(logFilePath))
+            {
+                return;
+            }
+            var retry = 10; // retry 10 times
+            for (var i = 1; i <= retry; i++)
+            {
+                try
+                {
+                    File.Delete(logFilePath);
+                    break;
+                }
+                catch (IOException) when (i < retry + 1)
+                {
+                    logger.LogWarning($"Couldn't delete file {logFilePath}, retrying... ({i + 1}/{retry})");
+                    await Task.Delay(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false);
+                    continue;
+                }
+            }
         }
-        var retry = 10; // retry 10 times
-        for (var i = 1; i <= retry; i++)
+        catch (OperationCanceledException)
         {
-            try
-            {
-                File.Delete(logFilePath);
-                break;
-            }
-            catch (IOException) when (i < retry + 1)
-            {
-                logger.LogWarning($"Couldn't delete file {logFilePath}, retrying... ({i + 1}/{retry})");
-                await Task.Delay(TimeSpan.FromSeconds(1));
-                continue;
-            }
+            // no error on CancellationToken cancel.
         }
     }
 
