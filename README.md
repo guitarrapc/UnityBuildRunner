@@ -33,11 +33,15 @@ Install-Package UnityBuildRunner.Core
 
 ```
 $ UnityBuildRunner --help
-Usage: full [options...]
+Usage: UnityBuildRunner [options...]
 
 Options:
-  -u, --unity-path <String>    Full Path to the Unity.exe (Default: )
-  -t, --timeout <String>        (Default: 00:60:00)
+  -unity-path, --unity-path <String>    Full Path to the Unity.exe (Leave empty when use 'UnityPath' Environment variables instead.) (Default: )
+  -timeout, --timeout <String>          Timeout to terminate execution within. default: "00:60:00" (Default: 00:60:00)
+
+Commands:
+  help       Display help.
+  version    Display version.
 ```
 
 ## CLI (Basic)
@@ -70,15 +74,15 @@ Then, append `UnityBuildRunner --unity-path <UnityPath>` to existing command, th
 You can use this library as your tool chain.
 
 ```csharp
-using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(30));
 // Parse settings from argument
-ISettings settings = DefaultSettings.Parse(args, @"C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe");
+ISettings settings = DefaultSettings.Parse(args, @"C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe", TimeSpan.FromMinutes(30));
+using var cts = settings.CreateCancellationTokenSource();
 
 // Run build
-IBuilder builder = new Builder(settings, logger);
-builder.BuildAsync(TimeSpan.FromMinutes(30), cts.Token);
+IBuilder builder = new DefaultBuilder(settings, logger);
+builder.BuildAsync(cts.Token);
 
-// ExitCode respect Unity's ExitCode but may override if timeout or errorfilter detects.
+// ExitCode is UnityBuildRunner and respect Unity's ExitCode.
 Console.WriteLine(builder.ExitCode);
 ```
 
