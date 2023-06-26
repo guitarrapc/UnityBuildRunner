@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 
@@ -11,10 +12,40 @@ public interface ISettings
     string UnityPath { get; }
     string LogFilePath { get; }
     string WorkingDirectory { get; }
+
+    /// <summary>
+    /// Validate Settings is correct.
+    /// </summary>
+    void Validate();
 }
 
 public record Settings(string[] Args, string ArgumentString, string UnityPath, string LogFilePath, string WorkingDirectory) : ISettings
 {
+    public void Validate()
+    {
+        // validate
+        if (string.IsNullOrWhiteSpace(UnityPath))
+            throw new ArgumentException($"Please pass Unity Executable path with argument '--unity-path' or environment variable '{nameof(UnityPath)}'.");
+        if (string.IsNullOrEmpty(LogFilePath))
+            throw new ArgumentException("Missing '-logFile filename' argument. Make sure you had targeted any log file path.");
+        if (!File.Exists(UnityPath))
+            throw new FileNotFoundException($"{nameof(UnityPath)} not found. {UnityPath}");
+    }
+
+    public static bool TryParse(string[] args, string unityPath, [NotNullWhen(true)] out Settings? settings)
+    {
+        try
+        {
+            settings = Parse(args, unityPath);
+            return true;
+        }
+        catch (Exception)
+        {
+            settings = null;
+            return false;
+        }
+    }
+
     public static Settings Parse(string[] args, string unityPath)
     {
         // Unity Path
@@ -34,7 +65,11 @@ public record Settings(string[] Args, string ArgumentString, string UnityPath, s
         // WorkingDirectory should be cli launch path.
         var workingDirectory = Directory.GetCurrentDirectory();
 
-        return new Settings(arguments, argumentString, unityPathFixed, logFilePath, workingDirectory);
+        // Create settings and validate
+        var settings = new Settings(arguments, argumentString, unityPathFixed, logFilePath, workingDirectory);
+        settings.Validate();
+
+        return settings;
     }
 
     public static string GetLogFile(string[] args)

@@ -40,24 +40,14 @@ public class DefaultBuilder : IBuilder
 
     public async Task<int> BuildAsync(ISettings settings, TimeSpan timeout)
     {
-        logger.LogInformation($"Preparing Unity Build.");
-
-        // validate
-        if (string.IsNullOrWhiteSpace(settings.UnityPath))
-            throw new ArgumentException($"Please pass Unity Executable path with argument `--unity-path` or environment variable `{nameof(settings.UnityPath)}`.");
-        if (!File.Exists(settings.UnityPath))
-            throw new FileNotFoundException($"{nameof(settings.UnityPath)} not found.{settings.UnityPath}");
-        if (string.IsNullOrEmpty(settings.LogFilePath))
-            throw new ArgumentException("Missing '-logFile filename' argument. Make sure you had targeted any log file path.");
-
         // Initialize
         logger.LogInformation($"Initializing LogFilePath '{settings.LogFilePath}'.");
         await InitializeAsync(settings.LogFilePath);
 
         // Build
         logger.LogInformation("Starting Unity Build.");
-        logger.LogInformation($"Command: {settings.UnityPath} {settings.ArgumentString}");
-        logger.LogInformation($"WorkingDir: {settings.WorkingDirectory}");
+        logger.LogInformation($"  - Command: {settings.UnityPath} {settings.ArgumentString}");
+        logger.LogInformation($"  - WorkingDir: {settings.WorkingDirectory}");
         var sw = Stopwatch.StartNew();
         using var process = Process.Start(new ProcessStartInfo()
         {

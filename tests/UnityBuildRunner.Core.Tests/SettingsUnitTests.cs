@@ -1,33 +1,50 @@
 using FluentAssertions;
 using System;
+using System.IO;
 using System.Linq;
 using Xunit;
 
 namespace UnityBuildRunner.Core.Tests;
 
-public class SettingsTest
+public class SettingsTest : IDisposable
 {
-    private readonly string _unityPath = @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe";
+    private readonly string _unityPath = Path.Combine(Path.GetTempPath(), @"Unity\Hub\2022.3.3f1\Editor\Unity.exe");
 
-    [Theory]
-    [InlineData(@"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe")]
-    [InlineData(@"C:\Program Files\Unity\Hub\2017.2.2p2\Editor\Unity.exe")]
-    public void UnityPathCanReadFromArguments(string unityPath)
+    public SettingsTest()
     {
-        ISettings settings = Settings.Parse(Array.Empty<string>(), unityPath);
-        settings.UnityPath.Should().Be(unityPath);
+        var dirName = Path.GetDirectoryName(_unityPath)!;
+        if (!File.Exists(_unityPath))
+        {
+            Directory.CreateDirectory(dirName);
+            File.Create(_unityPath);
+        }
     }
 
-    [Theory]
-    [InlineData("UnityPath", @"C:\Program Files\Unity\Hub\2017.4.5f1\Editor\Unity.exe")]
-    [InlineData("UnityPath", @"C:\Program Files\Unity\Hub\2017.2.2p2\Editor\Unity.exe")]
-    public void UnityPathCanReadFromEnvironment(string envName, string unityPath)
+    public void Dispose()
     {
-        Environment.SetEnvironmentVariable(envName, unityPath, EnvironmentVariableTarget.Process);
+        var dirName = Path.GetDirectoryName(_unityPath)!;
+        if (File.Exists(_unityPath))
+        {
+            Directory.CreateDirectory(dirName);
+        }
+    }
+
+    [Fact]
+    public void UnityPathCanReadFromArguments()
+    {
+        ISettings settings = Settings.Parse(Array.Empty<string>(), _unityPath);
+        settings.UnityPath.Should().Be(_unityPath);
+    }
+
+    [Fact]
+    public void UnityPathCanReadFromEnvironment()
+    {
+        var envName = "UnityPath";
+        Environment.SetEnvironmentVariable(envName, _unityPath, EnvironmentVariableTarget.Process);
         Environment.GetEnvironmentVariable(envName).Should().NotBeNull();
 
         ISettings settings = Settings.Parse(Array.Empty<string>(), "");
-        settings.UnityPath.Should().Be(unityPath);
+        settings.UnityPath.Should().Be(_unityPath);
 
         Environment.SetEnvironmentVariable(envName, null, EnvironmentVariableTarget.Process);
     }
