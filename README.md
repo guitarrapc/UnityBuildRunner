@@ -1,8 +1,9 @@
+[![dotnet-build](https://github.com/guitarrapc/UnityBuildRunner/actions/workflows/dotnet-build.yaml/badge.svg)](https://github.com/guitarrapc/UnityBuildRunner/actions/workflows/dotnet-build.yaml)
+[![release](https://github.com/guitarrapc/UnityBuildRunner/actions/workflows/dotnet-release.yaml/badge.svg)](https://github.com/guitarrapc/UnityBuildRunner/actions/workflows/dotnet-release.yaml)
+[![NuGet](https://img.shields.io/nuget/v/UnityBuildRunner.Core.svg?label=UnityBuildRunner.Core%20nuget)](https://www.nuget.org/packages/UnityBuildRunner.Core)
+[![NuGet](https://img.shields.io/nuget/v/UnityBuildRunner.svg?label=UnityBuildRunner%20nuget)](https://www.nuget.org/packages/UnityBuildRunner)
+
 ## UnityBuildRunner
-
-[![dotnet-build](https://github.com/guitarrapc/UnityBuildRunner/actions/workflows/dotnet-build.yaml/badge.svg)](https://github.com/guitarrapc/UnityBuildRunner/actions/workflows/dotnet-build.yaml) [![release](https://github.com/guitarrapc/UnityBuildRunner/actions/workflows/dotnet-release.yaml/badge.svg)](https://github.com/guitarrapc/UnityBuildRunner/actions/workflows/dotnet-release.yaml)
-
-[![NuGet](https://img.shields.io/nuget/v/UnityBuildRunner.Core.svg?label=UnityBuildRunner.Core%20nuget)](https://www.nuget.org/packages/UnityBuildRunner.Core) [![NuGet](https://img.shields.io/nuget/v/UnityBuildRunner.svg?label=UnityBuildRunner%20nuget)](https://www.nuget.org/packages/UnityBuildRunner)
 
 This tool enable you stdout Unity Build log on windows,  and control Timeout.
 
@@ -10,26 +11,25 @@ This tool enable you stdout Unity Build log on windows,  and control Timeout.
 
 # Motivation
 
-Unity Batch Build for Windows still not provide Unity Build log StdOut option, wheres macOS can check stdout with `-logfile -`.
-This small tool provide realtime stdout logging for Jenkins, VSTS and others.
+Windows Unity BatchBuild not provide Unity Build log StdOut option. This small tool provide realtime stdout build logs and build timeout control.
 
 # Installation
 
-Install with .NET Global Tool is the minimum cost.
+You can install as .NET Global Tool.
 
-```bash
+```sh
 dotnet tool install -g UnityBuildRunner
 ```
 
-Also provided as a library.
+Or, you can install as nuget package library.
 
-```bash
+```sh
 Install-Package UnityBuildRunner.Core
 ```
 
 # Usage
 
-You can use this tool via both CLI and Library.
+## CLI (Help)
 
 ```
 $ UnityBuildRunner --help
@@ -48,45 +48,30 @@ All you need to do is pass unity's path as `-u UnityPath` and leave other argmen
 
 If you are running Unity batch build like this.
 
-```bash
-"C:\Program Files\UnityApplications\2017.2.2p2\Editor\Unity.exe" -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\workspace\Source\Repos\MRTKSample\Unity" -logfile "log.log" -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
-```
+  ```sh
+  "C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe" -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\git\MRTKSample\Unity" -logfile "log.log" -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
+  ```
 
-Then, append `UnityBuildRunner --unity-path ` to existing command, that's all.
+Then, append `UnityBuildRunner --unity-path <UnityPath>` to existing command, that's all.
 
-```bash
-UnityBuildRunner --unity-path "C:\Program Files\UnityApplications\2017.2.2p2\Editor\Unity.exe" -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\workspace\Source\Repos\MRTKSample\Unity" -logfile "log.log" -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
-```
+  ```sh
+  UnityBuildRunner --unity-path "C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe" -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\git\MRTKSample\Unity" -logfile "log.log" -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
+  ```
 
-## CLI (Specifying UnityPath)
+> **Note**: Another way to specifying UnityPath is via Environment Variable `UnityPath`.
 
-You can pass Unity Path via Argument or EnvironmentVariables.
+  ```sh
+  set UnityPath=C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe
+  UnityBuildRunner -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\git\MRTKSample\Unity" -logfile "log.log" -executeMethod "HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
+  ```
 
-1. Argument: Add argument `--unity-path <PATH_TO_UNITY>` (or `-u <PATH_TO_UNITY>` for short parameter).
-1. Environment Variable: Set `UnityPath` Environment Variable. UnityBuildRunner automatically load it if argument is not specified.
-
-**Examples**
-
-Pass Unity Path via Argument `--unity-path`.
-
-```bash
-UnityBuildRunner --unity-path "C:\Program Files\UnityApplications\2017.2.2p2\Editor\Unity.exe" -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\workspace\Source\Repos\MRTKSample\Unity" -logfile "log.log" -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
-```
-
-Pass Unity Path via EnvironmentVariables `UnityPath`.
-
-```bash
-set UnityPath=C:\Program Files\UnityApplications\2017.2.2p2\Editor\Unity.exe
-UnityBuildRunner -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\workspace\Source\Repos\MRTKSample\Unity" -logfile "log.log" -executeMethod "HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
-```
-
-## Library
+## Library (Basic)
 
 You can use this library as your tool chain.
 
 ```csharp
 IBuilder builder = new Builder(logger);
-ISettings settings = Settings.Parse(args, @"C:\Program Files\Unity\Hub\Editor\2021.3.11f1\Editor\Unity.exe");
+ISettings settings = DefaultSettings.Parse(args, @"C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe");
 builder.BuildAsync(settings, TimeSpan.FromMinutes(30));
 ```
 
