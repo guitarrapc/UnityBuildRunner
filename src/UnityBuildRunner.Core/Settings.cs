@@ -12,15 +12,13 @@ public interface ISettings
     string UnityPath { get; }
     string LogFilePath { get; }
     string WorkingDirectory { get; }
-
-    /// <summary>
-    /// Validate Settings is correct.
-    /// </summary>
-    void Validate();
 }
 
 public record Settings(string[] Args, string ArgumentString, string UnityPath, string LogFilePath, string WorkingDirectory) : ISettings
 {
+    /// <summary>
+    /// Validate Settings is correct.
+    /// </summary>
     public void Validate()
     {
         // validate
@@ -32,6 +30,9 @@ public record Settings(string[] Args, string ArgumentString, string UnityPath, s
             throw new FileNotFoundException($"{nameof(UnityPath)} not found. {UnityPath}");
     }
 
+    /// <summary>
+    /// Parse args and generate Settings.
+    /// </summary>
     public static bool TryParse(string[] args, string unityPath, [NotNullWhen(true)] out Settings? settings)
     {
         try
@@ -46,6 +47,9 @@ public record Settings(string[] Args, string ArgumentString, string UnityPath, s
         }
     }
 
+    /// <summary>
+    /// Parse args and generate Settings.
+    /// </summary>
     public static Settings Parse(string[] args, string unityPath)
     {
         // Unity Path
@@ -72,7 +76,7 @@ public record Settings(string[] Args, string ArgumentString, string UnityPath, s
         return settings;
     }
 
-    public static string GetLogFile(string[] args)
+    internal static string GetLogFile(string[] args)
     {
         var logFile = "";
         for (var i = 0; i < args.Length; i++)
