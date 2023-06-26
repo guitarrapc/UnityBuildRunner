@@ -14,7 +14,7 @@ public interface ISettings
     string WorkingDirectory { get; }
 }
 
-public record Settings(string[] Args, string ArgumentString, string UnityPath, string LogFilePath, string WorkingDirectory) : ISettings
+public record DefaultSettings(string[] Args, string ArgumentString, string UnityPath, string LogFilePath, string WorkingDirectory) : ISettings
 {
     /// <summary>
     /// Validate Settings is correct.
@@ -33,7 +33,7 @@ public record Settings(string[] Args, string ArgumentString, string UnityPath, s
     /// <summary>
     /// Parse args and generate Settings.
     /// </summary>
-    public static bool TryParse(string[] args, string unityPath, [NotNullWhen(true)] out Settings? settings)
+    public static bool TryParse(string[] args, string unityPath, [NotNullWhen(true)] out DefaultSettings? settings)
     {
         try
         {
@@ -50,7 +50,7 @@ public record Settings(string[] Args, string ArgumentString, string UnityPath, s
     /// <summary>
     /// Parse args and generate Settings.
     /// </summary>
-    public static Settings Parse(string[] args, string unityPath)
+    public static DefaultSettings Parse(string[] args, string unityPath)
     {
         // Unity Path
         var unityPathFixed = !string.IsNullOrWhiteSpace(unityPath) ? unityPath : Environment.GetEnvironmentVariable(nameof(UnityPath)) ?? throw new ArgumentNullException("Unity Path not specified. Please specify via argument or Environment Variable.");
@@ -70,7 +70,7 @@ public record Settings(string[] Args, string ArgumentString, string UnityPath, s
         var workingDirectory = Directory.GetCurrentDirectory();
 
         // Create settings and validate
-        var settings = new Settings(arguments, argumentString, unityPathFixed, logFilePath, workingDirectory);
+        var settings = new DefaultSettings(arguments, argumentString, unityPathFixed, logFilePath, workingDirectory);
         settings.Validate();
 
         return settings;
