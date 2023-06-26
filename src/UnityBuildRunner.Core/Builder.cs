@@ -40,24 +40,14 @@ public class DefaultBuilder : IBuilder
 
     public async Task<int> BuildAsync(ISettings settings, TimeSpan timeout)
     {
-        logger.LogInformation($"Preparing Unity Build.");
-
-        // validate
-        if (string.IsNullOrWhiteSpace(settings.UnityPath))
-            throw new ArgumentException($"Please pass Unity Executable path with argument `--unity-path` or environment variable `{nameof(settings.UnityPath)}`.");
-        if (!File.Exists(settings.UnityPath))
-            throw new FileNotFoundException($"{nameof(settings.UnityPath)} not found.{settings.UnityPath}");
-        if (string.IsNullOrEmpty(settings.LogFilePath))
-            throw new ArgumentException("Missing '-logFile filename' argument. Make sure you had targeted any log file path.");
-
         // Initialize
         logger.LogInformation($"Initializing LogFilePath '{settings.LogFilePath}'.");
         await InitializeAsync(settings.LogFilePath);
 
         // Build
         logger.LogInformation("Starting Unity Build.");
-        logger.LogInformation($"Command: {settings.UnityPath} {settings.ArgumentString}");
-        logger.LogInformation($"WorkingDir: {settings.WorkingDirectory}");
+        logger.LogInformation($"  - Command: {settings.UnityPath} {settings.ArgumentString}");
+        logger.LogInformation($"  - WorkingDir: {settings.WorkingDirectory}");
         var sw = Stopwatch.StartNew();
         using var process = Process.Start(new ProcessStartInfo()
         {
@@ -68,9 +58,12 @@ public class DefaultBuilder : IBuilder
             CreateNoWindow = true,
         });
 
+        var exitCode = BuildErrorCode.Success;
+
         if (process is null)
         {
             sw.Stop();
+            exitCode = BuildErrorCode.ProcessNull;
             throw new OperationCanceledException("Could not start Unity. Somthing blocked creating process.");
         }
 
@@ -86,6 +79,7 @@ public class DefaultBuilder : IBuilder
                 }
                 else
                 {
+                    exitCode = BuildErrorCode.ProcessTimeout;
                     throw new TimeoutException($"Unity Process has been aborted. Waited 10 seconds but could't create logFilePath '{settings.LogFilePath}'.");
                 }
             }
@@ -93,6 +87,7 @@ public class DefaultBuilder : IBuilder
             // log file generated but process immediately exited.
             if (process.HasExited)
             {
+                exitCode = BuildErrorCode.ProcessImmediatelyExit;
                 throw new OperationCanceledException($"Unity process started but build unexpectedly finished before began.");
             }
 
@@ -104,6 +99,7 @@ public class DefaultBuilder : IBuilder
                 {
                     if (sw.Elapsed.TotalMilliseconds > timeout.TotalMilliseconds)
                     {
+                        exitCode = BuildErrorCode.ProcessTimeout;
                         throw new TimeoutException($"Timeout exceeded. {timeout.TotalMinutes}min has been passed, stopping build.");
                     }
 
@@ -124,46 +120,55 @@ public class DefaultBuilder : IBuilder
         {
             sw.Stop();
 
-            if (process.ExitCode == 0)
+            if (exitCode is BuildErrorCode.Success)
             {
-                logger.LogInformation($"Unity Build successfully complete. ({process.ExitCode})");
+                logger.LogInformation($"Unity Build successfully complete.");
             }
             else
             {
-                logger.LogInformation($"Unity Build failed. ({process.ExitCode})");
+                logger.LogInformation($"Unity Build failed.");
             }
 
             logger.LogInformation($"Elapsed Time {sw.Elapsed}");
 
             // Assume exit Unity process
-            if (!process.HasExited)
+            if (process is not null && !process.HasExited)
             {
                 logger.LogInformation($"Killing unterminated process. ({process.Id})");
                 process.Kill(true);
             }
         }
-        return process.ExitCode;
+
+        return exitCode.GetAttrubute<ErrorExitCodeAttribute>()?.ExitCode ?? 0;
     }
 
-    public async Task InitializeAsync(string path)
+    public async Task InitializeAsync(string logFilePath)
     {
-        if (!File.Exists(path))
+        await AssumeLogFileInitialized(logFilePath).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Assume Logfile is not exists, or delete before run.
+    /// </summary>
+    /// <param name="logFilePath"></param>
+    /// <returns></returns>
+    public async Task AssumeLogFileInitialized(string logFilePath)
+    {
+        if (!File.Exists(logFilePath))
         {
             return;
         }
-
-        // retry 10 times
-        var retry = 10;
+        var retry = 10; // retry 10 times
         for (var i = 1; i <= retry; i++)
         {
             try
             {
-                File.Delete(path);
+                File.Delete(logFilePath);
                 break;
             }
             catch (IOException) when (i < retry + 1)
             {
-                logger.LogWarning($"Couldn't delete file {path}, retrying... ({i + 1}/{retry})");
+                logger.LogWarning($"Couldn't delete file {logFilePath}, retrying... ({i + 1}/{retry})");
                 await Task.Delay(TimeSpan.FromSeconds(1));
                 continue;
             }
