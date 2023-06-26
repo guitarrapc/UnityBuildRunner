@@ -9,6 +9,7 @@ namespace UnityBuildRunner.Core.Tests;
 public class DefaultSettingsTest : IDisposable
 {
     private readonly string _unityPath = Path.Combine(Path.GetTempPath(), @"Unity\Hub\2022.3.3f1\Editor\Unity.exe");
+    private readonly TimeSpan _timeout = TimeSpan.FromMinutes(30);
 
     public DefaultSettingsTest()
     {
@@ -32,7 +33,7 @@ public class DefaultSettingsTest : IDisposable
     [Fact]
     public void UnityPathCanReadFromArguments()
     {
-        ISettings settings = DefaultSettings.Parse(Array.Empty<string>(), _unityPath);
+        ISettings settings = DefaultSettings.Parse(Array.Empty<string>(), _unityPath, _timeout);
         settings.UnityPath.Should().Be(_unityPath);
     }
 
@@ -43,7 +44,7 @@ public class DefaultSettingsTest : IDisposable
         Environment.SetEnvironmentVariable(envName, _unityPath, EnvironmentVariableTarget.Process);
         Environment.GetEnvironmentVariable(envName).Should().NotBeNull();
 
-        ISettings settings = DefaultSettings.Parse(Array.Empty<string>(), "");
+        ISettings settings = DefaultSettings.Parse(Array.Empty<string>(), "", _timeout);
         settings.UnityPath.Should().Be(_unityPath);
 
         Environment.SetEnvironmentVariable(envName, null, EnvironmentVariableTarget.Process);
@@ -57,7 +58,7 @@ public class DefaultSettingsTest : IDisposable
         Environment.SetEnvironmentVariable(envName, unityPath, EnvironmentVariableTarget.Process);
         Environment.GetEnvironmentVariable(envName).Should().NotBeNull();
 
-        Assert.Throws<ArgumentNullException>(() => DefaultSettings.Parse(Array.Empty<string>(), ""));
+        Assert.Throws<ArgumentNullException>(() => DefaultSettings.Parse(Array.Empty<string>(), "", _timeout));
 
         Environment.SetEnvironmentVariable(envName, null, EnvironmentVariableTarget.Process);
     }
@@ -67,7 +68,7 @@ public class DefaultSettingsTest : IDisposable
     [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite" }, "hoge.log")]
     public void ParseLogfile(string[] args, string logfile)
     {
-        ISettings settings = DefaultSettings.Parse(args, _unityPath);
+        ISettings settings = DefaultSettings.Parse(args, _unityPath, _timeout);
         var log = DefaultSettings.GetLogFile(args);
         log.Should().Be(logfile);
         settings.LogFilePath.Should().Be(logfile);
@@ -84,7 +85,7 @@ public class DefaultSettingsTest : IDisposable
     [InlineData(new[] { "-bathmode", "-nographics", "-projectpath", " ", @"foo\bar\baz\", "-executeMethod", "MethodName", "-quite" }, new[] { "-bathmode", "-nographics", "-projectpath", @"foo\bar\baz\", "-executeMethod", "MethodName", "-quite", "-logFile", "unitybuild.log" })]
     public void ArgsShouldNotContainNullOrWhiteSpace(string[] actual, string[] expected)
     {
-        ISettings settings = DefaultSettings.Parse(actual, _unityPath);
+        ISettings settings = DefaultSettings.Parse(actual, _unityPath, _timeout);
         settings.Args.SequenceEqual(expected).Should().BeTrue();
     }
 
@@ -97,7 +98,7 @@ public class DefaultSettingsTest : IDisposable
     [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", @"foo\bar\baz\", "-executeMethod", "MethodName", "-quite" }, "-logfile \"hoge.log\" -bathmode -nographics -projectpath \"foo\\bar\\baz\\\" -executeMethod \"MethodName\" -quite")]
     public void ArgsumentStringShouldFormated(string[] actual, string expected)
     {
-        ISettings settings = DefaultSettings.Parse(actual, _unityPath);
+        ISettings settings = DefaultSettings.Parse(actual, _unityPath, _timeout);
         settings.ArgumentString.Should().Be(expected);
     }
 }
