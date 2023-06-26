@@ -70,9 +70,16 @@ Then, append `UnityBuildRunner --unity-path <UnityPath>` to existing command, th
 You can use this library as your tool chain.
 
 ```csharp
-IBuilder builder = new Builder(logger);
+using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(30));
+// Parse settings from argument
 ISettings settings = DefaultSettings.Parse(args, @"C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe");
-builder.BuildAsync(settings, TimeSpan.FromMinutes(30));
+
+// Run build
+IBuilder builder = new Builder(settings, logger);
+builder.BuildAsync(TimeSpan.FromMinutes(30), cts.Token);
+
+// ExitCode respect Unity's ExitCode but may override if timeout or errorfilter detects.
+Console.WriteLine(builder.ExitCode);
 ```
 
 # TODO
