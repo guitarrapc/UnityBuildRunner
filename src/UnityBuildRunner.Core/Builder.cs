@@ -156,22 +156,29 @@ public class DefaultBuilder : IBuilder
     {
         await AssumeLogFileInitialized(logFilePath).ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Assume Logfile is not exists, or delete before run.
+    /// </summary>
+    /// <param name="logFilePath"></param>
+    /// <returns></returns>
+    public async Task AssumeLogFileInitialized(string logFilePath)
+    {
+        if (!File.Exists(logFilePath))
         {
             return;
         }
-
-        // retry 10 times
-        var retry = 10;
+        var retry = 10; // retry 10 times
         for (var i = 1; i <= retry; i++)
         {
             try
             {
-                File.Delete(path);
+                File.Delete(logFilePath);
                 break;
             }
             catch (IOException) when (i < retry + 1)
             {
-                logger.LogWarning($"Couldn't delete file {path}, retrying... ({i + 1}/{retry})");
+                logger.LogWarning($"Couldn't delete file {logFilePath}, retrying... ({i + 1}/{retry})");
                 await Task.Delay(TimeSpan.FromSeconds(1));
                 continue;
             }
