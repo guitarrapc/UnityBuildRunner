@@ -7,6 +7,8 @@ internal enum BuildErrorCode
 {
     [ErrorExitCode(0)]
     Success,
+    [ErrorExitCode(9900)]
+    BuildErrorMessageFound,
     [ErrorExitCode(9901)]
     ProcessNull,
     [ErrorExitCode(9902)]

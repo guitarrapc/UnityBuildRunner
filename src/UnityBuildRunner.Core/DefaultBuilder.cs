@@ -10,6 +10,10 @@ namespace UnityBuildRunner.Core;
 public interface IBuilder
 {
     /// <summary>
+    /// Build ExitCode
+    /// </summary>
+    public int ExitCode { get; }
+    /// <summary>
     /// Initialize Builder before build.
     /// </summary>
     /// <param name="logFilePath"></param>
@@ -22,7 +26,7 @@ public interface IBuilder
     /// <param name="timeout"></param>
     /// <param name="ct"></param>
     /// <returns></returns>
-    Task<int> BuildAsync(TimeSpan timeout, CancellationToken ct);
+    Task BuildAsync(TimeSpan timeout, CancellationToken ct);
 }
 
 public class DefaultBuilder : IBuilder
@@ -30,6 +34,9 @@ public class DefaultBuilder : IBuilder
     private readonly ISettings settings;
     private readonly ILogger logger;
     private readonly IErrorFilter? errorFilter;
+    private BuildErrorCode buildErrorCode = BuildErrorCode.Success;
+
+    public int ExitCode { get; private set; }
 
     public DefaultBuilder(ISettings settings, ILogger logger) : this(settings, logger, new DefaultErrorFilter())
     {
@@ -42,7 +49,7 @@ public class DefaultBuilder : IBuilder
         this.errorFilter = errorFilter;
     }
 
-    public async Task<int> BuildAsync(TimeSpan timeout, CancellationToken ct = default)
+    public async Task BuildAsync(TimeSpan timeout, CancellationToken ct = default)
     {
         // Initialize
         logger.LogInformation($"Initializing LogFilePath '{settings.LogFilePath}'.");
@@ -62,12 +69,10 @@ public class DefaultBuilder : IBuilder
             CreateNoWindow = true,
         });
 
-        var exitCode = BuildErrorCode.Success;
-
         if (process is null)
         {
             sw.Stop();
-            exitCode = BuildErrorCode.ProcessNull;
+            buildErrorCode = BuildErrorCode.ProcessNull;
             throw new OperationCanceledException("Could not start Unity. Somthing blocked creating process.");
         }
 
@@ -83,7 +88,7 @@ public class DefaultBuilder : IBuilder
                 }
                 else
                 {
-                    exitCode = BuildErrorCode.ProcessTimeout;
+                    buildErrorCode = BuildErrorCode.ProcessTimeout;
                     throw new TimeoutException($"Unity Process has been aborted. Waited 10 seconds but could't create logFilePath '{settings.LogFilePath}'.");
                 }
             }
@@ -91,7 +96,7 @@ public class DefaultBuilder : IBuilder
             // log file generated but process immediately exited.
             if (process.HasExited)
             {
-                exitCode = BuildErrorCode.ProcessImmediatelyExit;
+                buildErrorCode = BuildErrorCode.ProcessImmediatelyExit;
                 throw new OperationCanceledException($"Unity process started but build unexpectedly finished before began.");
             }
 
@@ -103,7 +108,7 @@ public class DefaultBuilder : IBuilder
                 {
                     if (sw.Elapsed.TotalMilliseconds > timeout.TotalMilliseconds)
                     {
-                        exitCode = BuildErrorCode.ProcessTimeout;
+                        buildErrorCode = BuildErrorCode.ProcessTimeout;
                         throw new TimeoutException($"Timeout exceeded. {timeout.TotalMinutes}min has been passed, stopping build.");
                     }
 
@@ -123,13 +128,13 @@ public class DefaultBuilder : IBuilder
         }
         catch (Exception ex)
         {
-            logger.LogCritical(ex, $"Error happen while building Unity. Error message: {ex.Message}");
+            logger.LogCritical(ex, $"Error happen while building Unity. Error message: {ex.Message}, Reason: {buildErrorCode}");
         }
         finally
         {
             sw.Stop();
 
-            if (exitCode is BuildErrorCode.Success)
+            if (buildErrorCode is BuildErrorCode.Success)
             {
                 logger.LogInformation($"Unity Build successfully complete.");
             }
@@ -138,17 +143,18 @@ public class DefaultBuilder : IBuilder
                 logger.LogInformation($"Unity Build failed.");
             }
 
+            ExitCode = buildErrorCode.GetAttrubute<ErrorExitCodeAttribute>()?.ExitCode ?? 0;
+            logger.LogInformation($"UnityBuildRunner exitCode is set to {ExitCode}");
+
             logger.LogInformation($"Elapsed Time {sw.Elapsed}");
 
             // Assume exit Unity process
             if (process is not null && !process.HasExited)
             {
-                logger.LogInformation($"Killing unterminated process. ({process.Id})");
+                logger.LogInformation($"Killing unterminated process. (processId: {process.Id})");
                 process.Kill(true);
             }
         }
-
-        return exitCode.GetAttrubute<ErrorExitCodeAttribute>()?.ExitCode ?? 0;
     }
 
     public async Task InitializeAsync(string logFilePath, CancellationToken ct)
@@ -202,7 +208,11 @@ public class DefaultBuilder : IBuilder
         // Output current log.
         logger.LogInformation(txt);
 
-        // Cancel on when error message found.
-        errorFilter?.Filter(txt, result => throw new OperationCanceledException($"ErrorFilter found specific build error. stdout: '{result.MatchPattern}'. pattern: '{result.MatchPattern}'"));
+        // Cancel when error message found.
+        errorFilter?.Filter(txt, result =>
+        {
+            buildErrorCode = BuildErrorCode.BuildErrorMessageFound;
+            throw new BuildErrorFoundException($"ErrorFilter found specific build error. stdout: '{result.MatchPattern}'. pattern: '{result.MatchPattern}'");
+        });
     }
 }

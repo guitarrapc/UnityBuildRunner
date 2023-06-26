@@ -25,11 +25,12 @@ public class DefaultErrorFilter : IErrorFilter
         var options = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline; ;
         var errorFilters = new[]
         {
+            "Compilation failed",
             "compilationhadfailure: True",
             "DisplayProgressNotification: Build Failed",
-            "Error building Player because scripts had compiler errors",
-            "Compilation failed",
             @"error CS\d+",
+            "Error building Player because scripts had compiler errors",
+            "Multiple Unity instances cannot open the same project.",
             "Unity has not been activated",
         };
         regexes = errorFilters.Select(x => new Regex(x, options)).ToArray();

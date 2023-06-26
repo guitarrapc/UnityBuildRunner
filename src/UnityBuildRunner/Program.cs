@@ -35,7 +35,8 @@ public class UnityBuildRunnerCommand : ConsoleAppBase
             var settings = DefaultSettings.Parse(arguments.ToArray()!, unityPath);
             var timeoutSpan = TimeSpan.TryParse(timeout, out var r) ? r : TimeSpan.FromMinutes(60);
             var builder = new DefaultBuilder(settings, logger);
-            return await builder.BuildAsync(timeoutSpan, Context.CancellationToken);
+            await builder.BuildAsync(timeoutSpan, Context.CancellationToken);
+            return builder.ExitCode;
         }
         else
         {
