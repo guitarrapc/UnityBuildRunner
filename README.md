@@ -6,11 +6,11 @@
 
 This tool enable you stdout Unity Build log on windows,  and control Timeout.
 
-> **Note**: Linux/macOS don't need use this tool, just pass non string with `-logfile` argument to see log on stdout.
+> **Note**: Linux/macOS don't need use this tool, just pass `-logfile -` argument to see log on stdout.
 
 # Motivation
 
-Unity Batch Build for Windows still not provide Unity Build log StdOut option, wheres macOS can check stdout with `-logfile` + no argument.
+Unity Batch Build for Windows still not provide Unity Build log StdOut option, wheres macOS can check stdout with `-logfile -`.
 This small tool provide realtime stdout logging for Jenkins, VSTS and others.
 
 # Installation
