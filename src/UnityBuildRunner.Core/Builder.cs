@@ -68,15 +68,15 @@ public class DefaultBuilder : IBuilder
             CreateNoWindow = true,
         });
 
+        var exitCode = BuildErrorCode.Success;
+
         if (process is null)
         {
             sw.Stop();
+            exitCode = BuildErrorCode.ProcessNull;
             throw new OperationCanceledException("Could not start Unity. Somthing blocked creating process.");
         }
 
-        var isProcessImmediatelyExit = false; // 9901
-        var isTimeout = false; // 9902
-        var isBuildSuccess = false; // 0
         try
         {
             // wait for log file generated.
@@ -89,7 +89,7 @@ public class DefaultBuilder : IBuilder
                 }
                 else
                 {
-                    isTimeout = true;
+                    exitCode = BuildErrorCode.ProcessTimeout;
                     throw new TimeoutException($"Unity Process has been aborted. Waited 10 seconds but could't create logFilePath '{settings.LogFilePath}'.");
                 }
             }
@@ -97,7 +97,7 @@ public class DefaultBuilder : IBuilder
             // log file generated but process immediately exited.
             if (process.HasExited)
             {
-                isProcessImmediatelyExit = true;
+                exitCode = BuildErrorCode.ProcessImmediatelyExit;
                 throw new OperationCanceledException($"Unity process started but build unexpectedly finished before began.");
             }
 
@@ -109,7 +109,7 @@ public class DefaultBuilder : IBuilder
                 {
                     if (sw.Elapsed.TotalMilliseconds > timeout.TotalMilliseconds)
                     {
-                        isTimeout = true;
+                        exitCode = BuildErrorCode.ProcessTimeout;
                         throw new TimeoutException($"Timeout exceeded. {timeout.TotalMinutes}min has been passed, stopping build.");
                     }
 
@@ -121,22 +121,16 @@ public class DefaultBuilder : IBuilder
                 await Task.Delay(TimeSpan.FromMilliseconds(500));
                 ReadLog(reader);
             }
-
-            isBuildSuccess = true;
-            return 0;
         }
         catch (Exception ex)
         {
             logger.LogCritical(ex, $"Error happen while building Unity. Error message: {ex.Message}");
-            if (process is null) return 1;
-            if (isProcessImmediatelyExit) return 9901;
-            if (isTimeout) return 9902;
         }
         finally
         {
             sw.Stop();
 
-            if (isBuildSuccess)
+            if (exitCode is BuildErrorCode.Success)
             {
                 logger.LogInformation($"Unity Build successfully complete.");
             }
@@ -155,12 +149,13 @@ public class DefaultBuilder : IBuilder
             }
         }
 
-        return process.ExitCode;
+        return exitCode.GetAttrubute<ErrorExitCodeAttribute>()?.ExitCode ?? 0;
     }
 
-    public async Task InitializeAsync(string path)
+    public async Task InitializeAsync(string logFilePath)
     {
-        if (!File.Exists(path))
+        await AssumeLogFileInitialized(logFilePath).ConfigureAwait(false);
+    }
         {
             return;
         }
