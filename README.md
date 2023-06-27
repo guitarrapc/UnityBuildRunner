@@ -91,7 +91,7 @@ You can use as Library as well. This is sample code to run Unity Build.
 
 ```csharp
 // Parse settings from argument
-ISettings settings = DefaultSettings.Parse(args, @"C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe", TimeSpan.FromMinutes(30));
+var settings = DefaultSettings.Parse(args, @"C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe", TimeSpan.FromMinutes(30));
 using var cts = settings.CreateCancellationTokenSource();
 
 // Run build
