@@ -20,9 +20,10 @@ public record ErrorFilterResult(string Message, string MatchPattern);
 public class DefaultErrorFilter : IErrorFilter
 {
     private readonly IReadOnlyList<Regex> regexes;
+
     public DefaultErrorFilter()
     {
-        var options = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline; ;
+        var options = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Multiline | RegexOptions.Compiled;
         var errorFilters = new[]
         {
             "Compilation failed",
@@ -42,7 +43,7 @@ public class DefaultErrorFilter : IErrorFilter
         {
             if (regex.IsMatch(message))
             {
-                onMatch?.Invoke(new ErrorFilterResult(message, regex.ToString()));
+                onMatch.Invoke(new ErrorFilterResult(message, regex.ToString()));
             }
         }
     }
