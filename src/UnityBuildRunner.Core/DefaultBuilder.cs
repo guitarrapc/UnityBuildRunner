@@ -175,31 +175,26 @@ public class DefaultBuilder : IBuilder
     /// <returns></returns>
     private async Task AssumeLogFileInitialized(string logFilePath, CancellationToken ct)
     {
-        try
+        if (!File.Exists(logFilePath))
         {
-            if (!File.Exists(logFilePath))
-            {
-                return;
-            }
-            var retry = 10; // retry 10 times
-            for (var i = 1; i <= retry; i++)
-            {
-                try
-                {
-                    File.Delete(logFilePath);
-                    break;
-                }
-                catch (IOException) when (i < retry + 1)
-                {
-                    logger.LogWarning($"Couldn't delete file {logFilePath}, retrying... ({i + 1}/{retry})");
-                    await Task.Delay(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false);
-                    continue;
-                }
-            }
+            return;
         }
-        catch (OperationCanceledException)
+        var retry = 10; // retry 10 times
+        for (var i = 1; i <= retry; i++)
         {
-            // no error on CancellationToken cancel.
+            ct.ThrowIfCancellationRequested();
+
+            try
+            {
+                File.Delete(logFilePath);
+                break;
+            }
+            catch (IOException) when (i < retry + 1)
+            {
+                logger.LogWarning($"Couldn't delete file {logFilePath}, retrying... ({i + 1}/{retry})");
+                await Task.Delay(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false);
+                continue;
+            }
         }
     }
 
