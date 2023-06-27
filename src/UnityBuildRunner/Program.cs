@@ -11,20 +11,22 @@ app.Run();
 
 public class UnityBuildRunnerCommand : ConsoleAppBase
 {
-    private const string defaultTimeout = "00:60:00";
+    private const string DefaultTimeout = "01:00:00";
 
     private readonly ILogger<UnityBuildRunnerCommand> logger;
+    private readonly TimeSpan timeoutDefault;
 
     public UnityBuildRunnerCommand(ILogger<UnityBuildRunnerCommand> logger)
     {
         this.logger = logger;
+        timeoutDefault = TimeSpan.Parse(DefaultTimeout);
     }
 
     [RootCommand]
-    public async Task<int> Run([Option("--unity-path", "Full Path to the Unity.exe (Leave empty when use 'UnityPath' Environment variables instead.)")] string unityPath = "", [Option("--timeout", $"Timeout to terminate execution within. default: \"{defaultTimeout}\"")] string timeout = defaultTimeout)
+    public async Task<int> Run([Option("--unity-path", "Full Path to the Unity executable, leave empty when use 'UnityPath' Environment variables instead.")] string unityPath = "", [Option("--timeout", "Timeout for Unity Build.")] string timeout = DefaultTimeout)
     {
         var arguments = Context.Arguments
-            .Except(new[] { "--timeout", "-t", timeout });
+            .Except(new[] { "--timeout", timeout });
         if (!string.IsNullOrEmpty(unityPath))
         {
             arguments = arguments.Except(new[] { "--unity-path", unityPath });
@@ -32,7 +34,7 @@ public class UnityBuildRunnerCommand : ConsoleAppBase
 
         if (arguments is not null && arguments.Any())
         {
-            var timeoutSpan = TimeSpan.TryParse(timeout, out var r) ? r : TimeSpan.FromMinutes(60);
+            var timeoutSpan = TimeSpan.TryParse(timeout, out var r) ? r : timeoutDefault;
             var settings = DefaultSettings.Parse(arguments.ToArray()!, unityPath, timeoutSpan);
             using var cts = settings.CreateCancellationTokenSource(Context.CancellationToken);
 

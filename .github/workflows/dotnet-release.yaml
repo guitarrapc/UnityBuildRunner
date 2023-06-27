@@ -6,7 +6,7 @@ on:
       - "[0-9]+.[0-9]+.[0-9]+*" # only tag
 
 env:
-  DOTNET_BUILD_CONFIG: Release
+  BUILD_CONFIG: Release
 
 jobs:
   build-dotnet:
@@ -22,9 +22,9 @@ jobs:
       # tag
       - run: echo "GIT_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
       # build
-      - run: dotnet build UnityBuildRunner.sln -c ${{ env.DOTNET_BUILD_CONFIG }} -p:Version=${{ env.GIT_TAG }}
+      - run: dotnet build -c ${{ env.BUILD_CONFIG }} -p:Version=${{ env.GIT_TAG }}
       # pack
-      - run: dotnet pack UnityBuildRunner.sln -c ${{ env.DOTNET_BUILD_CONFIG }} -p:Version=${{ env.GIT_TAG }} -o ./pack
+      - run: dotnet pack -c ${{ env.BUILD_CONFIG }} -p:Version=${{ env.GIT_TAG }} -o ./pack
       - uses: actions/upload-artifact@v3
         with:
           name: nuget

@@ -7,20 +7,26 @@ using System.Threading.Tasks;
 
 namespace UnityBuildRunner.Core;
 
+/// <summary>
+/// Unity Builder
+/// </summary>
 public interface IBuilder
 {
     /// <summary>
-    /// Build ExitCode
+    /// Build ExitCode.
     /// </summary>
     public int ExitCode { get; }
     /// <summary>
-    /// Run build.
+    /// Run Unity build.
     /// </summary>
     /// <param name="ct"></param>
     /// <returns></returns>
     Task BuildAsync(CancellationToken ct);
 }
 
+/// <summary>
+/// Default Unity builder
+/// </summary>
 public class DefaultBuilder : IBuilder
 {
     private readonly ISettings settings;
@@ -44,13 +50,14 @@ public class DefaultBuilder : IBuilder
     public async Task BuildAsync(CancellationToken ct = default)
     {
         // Initialize
-        logger.LogInformation($"Initializing LogFilePath '{settings.LogFilePath}'.");
+        logger.LogInformation($"Initializing UnityBuildRunner.");
         await InitializeAsync(settings.LogFilePath, ct).ConfigureAwait(false);
 
         // Build
         logger.LogInformation("Starting Unity Build.");
-        logger.LogInformation($"  - Command: {settings.UnityPath} {settings.ArgumentString}");
-        logger.LogInformation($"  - WorkingDir: {settings.WorkingDirectory}");
+        logger.LogInformation($"  - Command:     {settings.UnityPath} {settings.ArgumentString}");
+        logger.LogInformation($"  - WorkingDir:  {settings.WorkingDirectory}");
+        logger.LogInformation($"  - LogFilePath: {settings.LogFilePath}");
         var sw = Stopwatch.StartNew();
         using var process = Process.Start(new ProcessStartInfo()
         {
@@ -151,8 +158,9 @@ public class DefaultBuilder : IBuilder
             }
             logger.LogInformation($"Build Elapsed Time {sw.Elapsed}");
 
-            ExitCode = unityProcessExitCode == 0 ? buildErrorCode.GetAttrubute<ErrorExitCodeAttribute>()?.ExitCode ?? process.ExitCode : unityProcessExitCode;
-            logger.LogInformation($"Set {nameof(UnityBuildRunner)} ExitCode to {ExitCode}.");
+            // Unity's exit code 0 is not mean no error. Therefore, when Unity exitcode was 0 and UnityBuildRunner caught any exception, replace exitcode with custom error.
+            ExitCode = unityProcessExitCode == 0 ? buildErrorCode.GetAttrubute<ErrorExitCodeAttribute>()?.ExitCode ?? unityProcessExitCode : unityProcessExitCode;
+            logger.LogInformation($"Set ExitCode '{ExitCode}'.");
 
             // Assume exit Unity process
             if (process is not null && !process.HasExited)
@@ -163,6 +171,12 @@ public class DefaultBuilder : IBuilder
         }
     }
 
+    /// <summary>
+    /// Initialize Unity Build.
+    /// </summary>
+    /// <param name="logFilePath"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
     private async Task InitializeAsync(string logFilePath, CancellationToken ct)
     {
         await AssumeLogFileInitialized(logFilePath, ct).ConfigureAwait(false);
@@ -198,6 +212,12 @@ public class DefaultBuilder : IBuilder
         }
     }
 
+    /// <summary>
+    /// Read LogFile and output to Standard-output.
+    /// </summary>
+    /// <param name="reader"></param>
+    /// <param name="errorFilter"></param>
+    /// <exception cref="BuildErrorFoundException"></exception>
     private void ReadAndFilterLog(StreamReader reader, IErrorFilter errorFilter)
     {
         var txt = reader.ReadToEnd();
