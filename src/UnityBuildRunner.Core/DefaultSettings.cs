@@ -40,7 +40,7 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
             return CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutToken.Token);
         }
         else
-        { 
+        {
             return timeoutToken;
         }
     }
