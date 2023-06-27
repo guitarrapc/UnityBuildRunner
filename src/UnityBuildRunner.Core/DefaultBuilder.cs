@@ -127,7 +127,7 @@ public class DefaultBuilder : IBuilder
             logger.LogInformation("Operation canceled. Stopping build.");
             buildErrorCode = BuildErrorCode.OperationCancelled;
         }
-        catch(BuildErrorFoundException bex)
+        catch (BuildErrorFoundException bex)
         {
             logger.LogInformation($"Error filter caught message '{bex.StdOut}'. Stopping build.");
             buildErrorCode = BuildErrorCode.BuildErrorMessageFound;
