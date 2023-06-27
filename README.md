@@ -96,7 +96,7 @@ using var cts = settings.CreateCancellationTokenSource();
 
 // Run build
 IBuilder builder = new DefaultBuilder(settings, logger);
-builder.BuildAsync(cts.Token);
+await builder.BuildAsync(cts.Token);
 
 // ExitCode is UnityBuildRunner and respect Unity's ExitCode.
 Console.WriteLine(builder.ExitCode);
