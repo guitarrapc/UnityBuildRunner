@@ -69,7 +69,7 @@ public class DefaultSettingsTest : IDisposable
     public void ParseLogfile(string[] args, string logfile)
     {
         ISettings settings = DefaultSettings.Parse(args, _unityPath, _timeout);
-        var log = DefaultSettings.GetLogFile(args);
+        var log = DefaultSettings.ParseLogFile(args);
         log.Should().Be(logfile);
         settings.LogFilePath.Should().Be(logfile);
         settings.Args.Length.Should().Be(args.Length);
