@@ -14,13 +14,6 @@ public interface IBuilder
     /// </summary>
     public int ExitCode { get; }
     /// <summary>
-    /// Initialize Builder before build.
-    /// </summary>
-    /// <param name="logFilePath"></param>
-    /// <param name="ct"></param>
-    /// <returns></returns>
-    Task InitializeAsync(string logFilePath, CancellationToken ct);
-    /// <summary>
     /// Run build.
     /// </summary>
     /// <param name="ct"></param>
@@ -32,7 +25,7 @@ public class DefaultBuilder : IBuilder
 {
     private readonly ISettings settings;
     private readonly ILogger logger;
-    private readonly IErrorFilter? errorFilter;
+    private readonly IErrorFilter errorFilter;
     private BuildErrorCode buildErrorCode = BuildErrorCode.Success;
 
     public int ExitCode { get; private set; }
@@ -106,13 +99,13 @@ public class DefaultBuilder : IBuilder
                 // read logs and redirect to stdout
                 while (!process.HasExited)
                 {
-                    ReadLog(reader);
+                    ReadAndFilterLog(reader, errorFilter);
                     await Task.Delay(TimeSpan.FromMilliseconds(500), ct).ConfigureAwait(false);
                 }
 
                 // read last log
                 await Task.Delay(TimeSpan.FromMilliseconds(500), ct).ConfigureAwait(false);
-                ReadLog(reader);
+                ReadAndFilterLog(reader, errorFilter);
             }
 
             // respect unity's exitcode
@@ -170,7 +163,7 @@ public class DefaultBuilder : IBuilder
         }
     }
 
-    public async Task InitializeAsync(string logFilePath, CancellationToken ct)
+    private async Task InitializeAsync(string logFilePath, CancellationToken ct)
     {
         await AssumeLogFileInitialized(logFilePath, ct).ConfigureAwait(false);
     }
@@ -182,35 +175,30 @@ public class DefaultBuilder : IBuilder
     /// <returns></returns>
     private async Task AssumeLogFileInitialized(string logFilePath, CancellationToken ct)
     {
-        try
+        if (!File.Exists(logFilePath))
         {
-            if (!File.Exists(logFilePath))
-            {
-                return;
-            }
-            var retry = 10; // retry 10 times
-            for (var i = 1; i <= retry; i++)
-            {
-                try
-                {
-                    File.Delete(logFilePath);
-                    break;
-                }
-                catch (IOException) when (i < retry + 1)
-                {
-                    logger.LogWarning($"Couldn't delete file {logFilePath}, retrying... ({i + 1}/{retry})");
-                    await Task.Delay(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false);
-                    continue;
-                }
-            }
+            return;
         }
-        catch (OperationCanceledException)
+        var retry = 10; // retry 10 times
+        for (var i = 1; i <= retry; i++)
         {
-            // no error on CancellationToken cancel.
+            ct.ThrowIfCancellationRequested();
+
+            try
+            {
+                File.Delete(logFilePath);
+                break;
+            }
+            catch (IOException) when (i < retry + 1)
+            {
+                logger.LogWarning($"Couldn't delete file {logFilePath}, retrying... ({i + 1}/{retry})");
+                await Task.Delay(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false);
+                continue;
+            }
         }
     }
 
-    private void ReadLog(StreamReader reader)
+    private void ReadAndFilterLog(StreamReader reader, IErrorFilter errorFilter)
     {
         var txt = reader.ReadToEnd();
         if (string.IsNullOrEmpty(txt))
@@ -221,7 +209,7 @@ public class DefaultBuilder : IBuilder
         // Output current log.
         logger.LogInformation(txt);
 
-        // Cancel when error message found.
-        errorFilter?.Filter(txt, result => throw new BuildErrorFoundException($"Error filter caught error.", result.MatchPattern, result.MatchPattern));
+        // Exception when error message found.
+        errorFilter.Filter(txt, result => throw new BuildErrorFoundException($"Error filter caught error.", result.MatchPattern, result.MatchPattern));
     }
 }

@@ -15,10 +15,14 @@ Windows Unity BatchBuild not provide Unity Build log StdOut option. This small t
 
 # Installation
 
-You can install as .NET Global Tool.
+You can install as .NET Global Tool or .NET Tool.
 
 ```sh
+# install as global tool
 dotnet tool install -g UnityBuildRunner
+
+# install to project's .config
+dotnet tool install UnityBuildRunner
 ```
 
 Or, you can install as nuget package library.
@@ -30,6 +34,8 @@ Install-Package UnityBuildRunner.Core
 # Usage
 
 ## CLI (Help)
+
+You can run installed tool via `UnityBuildRunner` (.NET Global Tool) or `dotnet UnityBuildRunner` (.NET Tool) command.
 
 ```
 $ UnityBuildRunner --help
@@ -53,25 +59,35 @@ All you need to do is pass unity's path as `-u UnityPath` and leave other argmen
 If you are running Unity batch build like this.
 
   ```sh
-  "C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe" -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\git\MRTKSample\Unity" -logfile "log.log" -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
+  $ "C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe" -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\git\MRTKSample\Unity" -logfile "log.log" -executeMethod "HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
   ```
 
-Then, append `UnityBuildRunner --unity-path <UnityPath>` to existing command, that's all.
+Then, append `UnityBuildRunner --unity-path <UnityPath>` or `dotnet UnityBuildRunner --unity-path <UnityPath>` to existing command, that's all.
 
   ```sh
-  UnityBuildRunner --unity-path "C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe" -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\git\MRTKSample\Unity" -logfile "log.log" -executeMethod HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
+  # .NET Global Tool
+  $ UnityBuildRunner --unity-path "C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe" -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\git\MRTKSample\Unity" -logfile "log.log" -executeMethod "HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
+
+  # .NET Tool
+  $ UnityBuildRunner --unity-path "C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe" -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\git\MRTKSample\Unity" -logfile "log.log" -executeMethod "HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
   ```
 
 > **Note**: Another way to specifying UnityPath is via Environment Variable `UnityPath`.
 
   ```sh
-  set UnityPath=C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe
-  UnityBuildRunner -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\git\MRTKSample\Unity" -logfile "log.log" -executeMethod "HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
+  # Environment Variables
+  $ set UnityPath=C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe
+
+  # .NET Global Tool
+  $ UnityBuildRunner -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\git\MRTKSample\Unity" -logfile "log.log" -executeMethod "HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
+
+  # .NET Tool
+  $ dotnet UnityBuildRunner -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\git\MRTKSample\Unity" -logfile "log.log" -executeMethod "HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
   ```
 
 ## Library (Basic)
 
-You can use this library as your tool chain.
+You can use as Library as well. This is sample code to run Unity Build.
 
 ```csharp
 // Parse settings from argument
