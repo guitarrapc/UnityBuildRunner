@@ -50,13 +50,14 @@ public class DefaultBuilder : IBuilder
     public async Task BuildAsync(CancellationToken ct = default)
     {
         // Initialize
-        logger.LogInformation($"Initializing LogFilePath '{settings.LogFilePath}'.");
+        logger.LogInformation($"Initializing UnityBuildRunner.");
         await InitializeAsync(settings.LogFilePath, ct).ConfigureAwait(false);
 
         // Build
         logger.LogInformation("Starting Unity Build.");
-        logger.LogInformation($"  - Command: {settings.UnityPath} {settings.ArgumentString}");
-        logger.LogInformation($"  - WorkingDir: {settings.WorkingDirectory}");
+        logger.LogInformation($"  - Command:     {settings.UnityPath} {settings.ArgumentString}");
+        logger.LogInformation($"  - WorkingDir:  {settings.WorkingDirectory}");
+        logger.LogInformation($"  - LogFilePath: {settings.LogFilePath}");
         var sw = Stopwatch.StartNew();
         using var process = Process.Start(new ProcessStartInfo()
         {
