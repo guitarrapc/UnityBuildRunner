@@ -9,7 +9,7 @@ on:
       - "main"
 
 env:
-  DOTNET_BUILD_CONFIG: Debug
+  BUILD_CONFIG: Debug
 
 jobs:
   build-dotnet:
@@ -23,6 +23,6 @@ jobs:
             6.0.x
             7.0.x
       - name: Build
-        run: dotnet build UnityBuildRunner.sln -c ${{ env.DOTNET_BUILD_CONFIG }}
+        run: dotnet build -c ${{ env.BUILD_CONFIG }}
       - name: Test
-        run: dotnet test UnityBuildRunner.sln --no-build -c ${{ env.DOTNET_BUILD_CONFIG }} --logger GitHubActions --logger console;verbosity=normal
+        run: dotnet test --no-build -c ${{ env.BUILD_CONFIG }} --logger GitHubActions --logger console;verbosity=normal
