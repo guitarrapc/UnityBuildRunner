@@ -84,7 +84,7 @@ public class DefaultBuilder : IBuilder
                 if (logFileFound) break;
 
                 // retry for 10 seconds.
-                if (sw.Elapsed.TotalSeconds < 10 * 1000)
+                if (sw.Elapsed.TotalSeconds < 10)
                 {
                     await Task.Delay(TimeSpan.FromMilliseconds(10), ct).ConfigureAwait(false);
                 }
