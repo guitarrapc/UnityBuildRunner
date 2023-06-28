@@ -70,12 +70,11 @@ public class DefaultBuilder : IBuilder
 
         if (process is null)
         {
-            sw.Stop();
-            buildErrorCode = BuildErrorCode.ProcessNull;
             throw new OperationCanceledException("Could not start Unity. Somthing blocked creating process.");
         }
 
         var unityProcessExitCode = 0;
+        var logFileFound = false;
         try
         {
             // wait for log file generated.
@@ -98,8 +97,7 @@ public class DefaultBuilder : IBuilder
             // log file generated but process immediately exited.
             if (process.HasExited)
             {
-                buildErrorCode = BuildErrorCode.ProcessImmediatelyExit;
-                throw new OperationCanceledException($"Unity process started but build unexpectedly finished before began.");
+                throw new OperationCanceledException($"Unity process started but build unexpectedly finished.");
             }
 
             using (var file = File.Open(settings.LogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
@@ -124,26 +122,43 @@ public class DefaultBuilder : IBuilder
                 buildErrorCode = BuildErrorCode.UnityProcessError;
             }
         }
+        catch (OperationCanceledException ex) when (process is null)
+        {
+            // process could not create
+            logger.LogInformation($"Stopping build. {ex.Message}");
+            buildErrorCode = BuildErrorCode.ProcessNull;
+        }
+        catch (OperationCanceledException ex) when (process.HasExited)
+        {
+            // process immediately finished
+            logger.LogInformation($"Stopping build. {ex.Message}");
+            buildErrorCode = BuildErrorCode.ProcessImmediatelyExit;
+        }
         catch (OperationCanceledException) when (sw.Elapsed.TotalMilliseconds > settings.TimeOut.TotalMilliseconds)
         {
             // Timeout
-            logger.LogInformation($"Timeout exceeded, {settings.TimeOut.TotalMinutes}min has been passed. Stopping build.");
+            logger.LogInformation($"Stopping build. Timeout exceeded, {settings.TimeOut.TotalMinutes}min has been passed.");
             buildErrorCode = BuildErrorCode.ProcessTimeout;
         }
         catch (OperationCanceledException)
         {
             // User cancel or any cancellation detected
-            logger.LogInformation("Operation canceled. Stopping build.");
+            logger.LogInformation("Stopping build. Operation canceled.");
             buildErrorCode = BuildErrorCode.OperationCancelled;
         }
-        catch (BuildErrorFoundException bex)
+        catch (BuildErrorFoundException ex)
         {
-            logger.LogInformation($"Error filter caught message '{bex.StdOut}'. Stopping build.");
+            logger.LogInformation($"Stopping build. {ex.Message} stdout: '{ex.StdOut}'");
             buildErrorCode = BuildErrorCode.BuildErrorMessageFound;
+        }
+        catch (BuildLogNotFoundException ex)
+        {
+            logger.LogCritical(ex, $"Stopping build.{ex.Message} logFile: '{ex.LogFilePath}'.");
+            buildErrorCode = BuildErrorCode.LogFileNotFound;
         }
         catch (Exception ex)
         {
-            logger.LogCritical(ex, $"Error happen while building Unity. Error message: {ex.Message}");
+            logger.LogCritical(ex, $"Stopping build. Error happen while building Unity. {ex.Message}");
             buildErrorCode = BuildErrorCode.OtherError;
         }
         finally
