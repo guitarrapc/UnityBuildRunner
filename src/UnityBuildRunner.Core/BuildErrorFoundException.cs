@@ -17,3 +17,18 @@ internal class BuildErrorFoundException : Exception
         MatchPattern = matchPattern;
     }
 }
+
+
+internal class BuildLogNotFoundException : Exception
+{
+    public override string Message => message;
+    private string message;
+
+    public string LogFilePath { get; }
+
+    public BuildLogNotFoundException(string message, string logFilePath)
+    {
+        this.message = message;
+        LogFilePath = logFilePath;
+    }
+}

@@ -79,17 +79,19 @@ public class DefaultBuilder : IBuilder
         try
         {
             // wait for log file generated.
-            while (!File.Exists(settings.LogFilePath) && !process.HasExited)
+            while (!process.HasExited)
             {
-                // retry in 10 seconds.
+                logFileFound = File.Exists(settings.LogFilePath);
+                if (logFileFound) break;
+
+                // retry for 10 seconds.
                 if (sw.Elapsed.TotalSeconds < 10 * 1000)
                 {
                     await Task.Delay(TimeSpan.FromMilliseconds(10), ct).ConfigureAwait(false);
                 }
                 else
                 {
-                    buildErrorCode = BuildErrorCode.ProcessTimeout;
-                    throw new TimeoutException($"Unity Process has been aborted. Waited 10 seconds but could't create logFilePath '{settings.LogFilePath}'.");
+                    throw new BuildLogNotFoundException($"Unity Process seems not create logfile.", settings.LogFilePath);
                 }
             }
 
