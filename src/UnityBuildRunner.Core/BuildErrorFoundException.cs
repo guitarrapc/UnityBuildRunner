@@ -25,10 +25,12 @@ internal class BuildLogNotFoundException : Exception
     private string message;
 
     public string LogFilePath { get; }
+    public string FullPath { get; }
 
-    public BuildLogNotFoundException(string message, string logFilePath)
+    public BuildLogNotFoundException(string message, string logFilePath, string fullPath)
     {
         this.message = message;
         LogFilePath = logFilePath;
+        FullPath = fullPath;
     }
 }

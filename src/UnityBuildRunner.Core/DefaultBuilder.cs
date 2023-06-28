@@ -90,7 +90,7 @@ public class DefaultBuilder : IBuilder
                 }
                 else
                 {
-                    throw new BuildLogNotFoundException($"Unity Process seems not create logfile.", settings.LogFilePath);
+                    throw new BuildLogNotFoundException($"Unity Process not created logfile.", settings.LogFilePath, Path.Combine(settings.WorkingDirectory, settings.LogFilePath));
                 }
             }
 
@@ -153,7 +153,7 @@ public class DefaultBuilder : IBuilder
         }
         catch (BuildLogNotFoundException ex)
         {
-            logger.LogCritical(ex, $"Stopping build.{ex.Message} logFile: '{ex.LogFilePath}'.");
+            logger.LogCritical(ex, $"Stopping build. {ex.Message} logFile: '{ex.LogFilePath}', FullPath: '{ex.FullPath}'.");
             buildErrorCode = BuildErrorCode.LogFileNotFound;
         }
         catch (Exception ex)
