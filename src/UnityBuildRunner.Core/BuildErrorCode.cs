@@ -19,6 +19,8 @@ internal enum BuildErrorCode
     ProcessTimeout,
     [ErrorExitCode(9904)]
     OperationCancelled,
+    [ErrorExitCode(9905)]
+    LogFileNotFound,
     [ErrorExitCode(9999)]
     OtherError,
 }

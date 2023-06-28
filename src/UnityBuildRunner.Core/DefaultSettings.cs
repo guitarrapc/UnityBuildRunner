@@ -116,10 +116,15 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
 
         // parse and fallback logfilePath
         var logFilePath = ParseLogFile(args);
-        if (string.IsNullOrWhiteSpace(logFilePath))
+        if (!IsValidLogFileName(logFilePath))
         {
+            var inputLogFilePath = logFilePath;
             logFilePath = "unitybuild.log";
-            args = args.Concat(new[] { "-logFile", logFilePath }).ToArray();
+            // remove current `-logFile "-"` and replace to `-logFile unitybuild.log`
+            var tmpArgs = string.IsNullOrEmpty(logFilePath)
+                ? args.Except(new[] { "-logFile" }, StringComparer.OrdinalIgnoreCase).Concat(new[] { "-logFile", logFilePath })
+                : args.Except(new[] { "-logFile" }, StringComparer.OrdinalIgnoreCase).Except(new[] { inputLogFilePath } ).Concat(new[] { "-logFile", logFilePath });
+            args = tmpArgs.ToArray();
         }
 
         var arguments = args.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
@@ -154,5 +159,15 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
             }
         }
         return logFile;
+    }
+
+    internal static bool IsValidLogFileName(string? fileName)
+    {
+        // missing filename is not valid
+        if (fileName is null) return false;
+        if (fileName is "") return false;
+        // Unity not create logfile when "-" passed. It's unexpected for UnityBuildRunner.
+        if (fileName == "-") return false;
+        return true;
     }
 }

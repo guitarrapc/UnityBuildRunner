@@ -101,4 +101,15 @@ public class DefaultSettingsTest : IDisposable
         ISettings settings = DefaultSettings.Parse(actual, _unityPath, _timeout);
         settings.ArgumentString.Should().Be(expected);
     }
+
+    [Theory]
+    [InlineData(null, false)]
+    [InlineData("", false)]
+    [InlineData("-", false)]
+    [InlineData("foo", true)]
+    [InlineData("log.log", true)]
+    public void IsValidLogFilePath(string? logFilePath, bool expected)
+    {
+        DefaultSettings.IsValidLogFileName(logFilePath).Should().Be(expected);
+    }
 }
