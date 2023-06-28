@@ -102,7 +102,8 @@ await builder.BuildAsync(cts.Token);
 Console.WriteLine(builder.ExitCode);
 ```
 
-# TODO
+## FAQ
 
-- [x] dotnet global command
-- [x] core logic as nuget
+**What happen when passing `-logFile -` argument?**
+
+Unity.exe not generate log file when passing `-` as log file name. Therefore UnityBuildRunner replace `-` to temporary log file `unitybuild.log` instead.
