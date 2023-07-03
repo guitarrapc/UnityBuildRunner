@@ -20,7 +20,7 @@ jobs:
             6.0.x
             7.0.x
       # tag
-      - run: echo "GIT_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - run: echo "GIT_TAG=${GITHUB_REF#refs/tags/}" | tee -a "$GITHUB_ENV"
       # build
       - run: dotnet build -c ${{ env.BUILD_CONFIG }} -p:Version=${{ env.GIT_TAG }}
       # pack
@@ -39,7 +39,7 @@ jobs:
           dotnet-version: |
             6.0.x
             7.0.x
-      - run: echo "GIT_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+      - run: echo "GIT_TAG=${GITHUB_REF#refs/tags/}" | tee -a "$GITHUB_ENV"
       # Create Release
       - uses: actions/create-release@v1
         id: create_release
