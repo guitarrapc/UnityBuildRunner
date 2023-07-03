@@ -7,12 +7,15 @@ on:
   pull_request:
     branches:
       - "main"
+  issue_comment:
+    types: [created]
 
 env:
   BUILD_CONFIG: Debug
 
 jobs:
   build-dotnet:
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' || (github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '@actions /build')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -25,4 +28,4 @@ jobs:
       - name: Build
         run: dotnet build -c ${{ env.BUILD_CONFIG }}
       - name: Test
-        run: dotnet test --no-build -c ${{ env.BUILD_CONFIG }} --logger GitHubActions --logger console;verbosity=normal
+        run: dotnet test --no-build -c ${{ env.BUILD_CONFIG }} --logger GitHubActions --logger "console;verbosity=normal"
