@@ -123,7 +123,7 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
             // remove current `-logFile "-"` and replace to `-logFile unitybuild.log`
             var tmpArgs = string.IsNullOrEmpty(logFilePath)
                 ? args.Except(new[] { "-logFile" }, StringComparer.OrdinalIgnoreCase).Concat(new[] { "-logFile", logFilePath })
-                : args.Except(new[] { "-logFile" }, StringComparer.OrdinalIgnoreCase).Except(new[] { inputLogFilePath } ).Concat(new[] { "-logFile", logFilePath });
+                : args.Except(new[] { "-logFile" }, StringComparer.OrdinalIgnoreCase).Except(new[] { inputLogFilePath }).Concat(new[] { "-logFile", logFilePath });
             args = tmpArgs.ToArray();
         }
 
