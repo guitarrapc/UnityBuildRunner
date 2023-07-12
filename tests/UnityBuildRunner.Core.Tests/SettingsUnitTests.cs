@@ -96,7 +96,7 @@ public class DefaultSettingsTest : IDisposable
     [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "foo/bar/baz/", "-executeMethod", "MethodName", "-quite" }, "-logfile \"hoge.log\" -bathmode -nographics -projectpath \"foo/bar/baz/\" -executeMethod \"MethodName\" -quite")]
     [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", @"foo\bar\baz", "-executeMethod", "MethodName", "-quite" }, "-logfile \"hoge.log\" -bathmode -nographics -projectpath \"foo\\bar\\baz\" -executeMethod \"MethodName\" -quite")]
     [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", @"foo\bar\baz\", "-executeMethod", "MethodName", "-quite" }, "-logfile \"hoge.log\" -bathmode -nographics -projectpath \"foo\\bar\\baz\\\" -executeMethod \"MethodName\" -quite")]
-    [InlineData(new[] { "-logfile", "\"hoge.log\"", "-bathmode", "-nographics", "-projectpath", @"""foo\bar\baz\""", "-executeMethod", "\"MethodName\"", "-quite" }, "-logfile \"hoge.log\" -bathmode -nographics -projectpath \"foo\\bar\\baz\\\" -executeMethod \"MethodName\" -quite")] // add "" to input argument
+    [InlineData(new[] { "-logfile", "\"hoge.log\"", "-bathmode", "-nographics", "-projectpath", @"""foo\bar\baz\""", "-executeMethod", "\"MethodName\"", "-quite" }, "-logfile \"hoge.log\" -bathmode -nographics -projectpath \"foo\\bar\\baz\\\" -executeMethod \"MethodName\" -quite")] // input is already quoted
     public void ArgsumentStringShouldFormated(string[] actual, string expected)
     {
         ISettings settings = DefaultSettings.Parse(actual, _unityPath, _timeout);
@@ -112,5 +112,23 @@ public class DefaultSettingsTest : IDisposable
     public void IsValidLogFilePath(string? logFilePath, bool expected)
     {
         DefaultSettings.IsValidLogFileName(logFilePath).Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("\"")]
+    [InlineData("\"foo")]
+    [InlineData("foo\"")]
+    public void QuoteStringInvalidInput(string input)
+    {
+        Assert.Throws<ArgumentException>(() => DefaultSettings.QuoteString(input));
+    }
+
+    [Theory]
+    [InlineData("\"\"", "\"\"")]
+    [InlineData("\"foo\"", "\"foo\"")]
+    [InlineData("foo", "\"foo\"")]
+    public void QuoteStringValidValue(string input, string expected)
+    {
+        DefaultSettings.QuoteString(input).Should().Be(expected);
     }
 }
