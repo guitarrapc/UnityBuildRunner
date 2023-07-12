@@ -31,22 +31,20 @@ public class UnityBuildRunnerCommand : ConsoleAppBase
         {
             arguments = arguments.Except(new[] { "--unity-path", unityPath });
         }
+        var args = arguments?.ToArray();
 
-        if (arguments is not null && arguments.Any())
+        if (args is null || !args.Any())
         {
-            var timeoutSpan = TimeSpan.TryParse(timeout, out var r) ? r : timeoutDefault;
-            var settings = DefaultSettings.Parse(arguments.ToArray()!, unityPath, timeoutSpan);
-            using var cts = settings.CreateCancellationTokenSource(Context.CancellationToken);
+            throw new ArgumentOutOfRangeException($"No valid argument found, exiting. You have specified arguments: {string.Join(" ", args ?? Array.Empty<string>())}");
+        }
 
-            // build
-            var builder = new DefaultBuilder(settings, logger);
-            await builder.BuildAsync(cts.Token);
-            return builder.ExitCode;
-        }
-        else
-        {
-            logger.LogError($"No valid argument found, exiting. You have specified arguments: {string.Join(" ", arguments?.ToArray() ?? Array.Empty<string>())}");
-            return 1;
-        }
+        // build
+        var timeoutSpan = TimeSpan.TryParse(timeout, out var r) ? r : timeoutDefault;
+        var settings = DefaultSettings.Parse(args!, unityPath, timeoutSpan);
+        using var cts = settings.CreateCancellationTokenSource(Context.CancellationToken);
+
+        var builder = new DefaultBuilder(settings, logger);
+        await builder.BuildAsync(cts.Token);
+        return builder.ExitCode;
     }
 }

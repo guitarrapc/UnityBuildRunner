@@ -92,7 +92,7 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
     /// <summary>
     /// Parse args and create <see cref="DefaultSettings"/>.
     /// </summary>
-    public static bool TryParse(string[] args, string unityPath, TimeSpan timeout, [NotNullWhen(true)] out DefaultSettings? settings)
+    public static bool TryParse(IReadOnlyList<string> args, string unityPath, TimeSpan timeout, [NotNullWhen(true)] out DefaultSettings? settings)
     {
         try
         {
@@ -128,7 +128,7 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
         }
 
         var arguments = args.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
-        var argumentString = string.Join(" ", arguments.Select(s => s.First() == '-' ? s : "\"" + s + "\""));
+        var argumentString = string.Join(" ", arguments.Select(s => s.AsSpan()[0] == '-' ? s : QuoteString(s)));
 
         // WorkingDirectory should be cli launch path.
         var workingDirectory = Directory.GetCurrentDirectory();
@@ -140,6 +140,56 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
         settings.Validate();
 
         return settings;
+    }
+
+    /// <summary>
+    /// QuoteString when possible.
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    internal static string QuoteString(string text)
+    {
+        var span = text.AsSpan();
+
+        // `` is invalid
+        if (span.Length == 0)
+        {
+            throw new ArgumentException($"Argument is empty and is not valid string to quote. input: {text}");
+        }
+
+        // `"` is invalid
+        if (span.Length == 1 && span[0] == '"')
+        {
+            throw new ArgumentException($"Argument is \" and is not valid string to quote. input: {text}");
+        }
+
+        // `"foo` is invalid
+        if (span.Length >= 2 && span[0] == '"' && span[^1] != '"')
+        {
+            throw new ArgumentException($"Argument begin with \" but not closed, please complete quote. input: {text}");
+        }
+
+        // `foo"` is invalid
+        if (span.Length >= 2 && span[0] != '"' && span[^1] == '"')
+        {
+            throw new ArgumentException($"Argument end with \" but not begin with \", please complete quote. input: {text}");
+        }
+
+        // `foo"foo` or `foo"foo"foo` is invalid
+        if (span[1..^1].Contains('"'))
+        {
+            throw new ArgumentException($"Argument contains \", but is invalid. input: {text}");
+        }
+
+        // `""` and `"foo"` is valid
+        if (span.Length >= 2 && span[0] == '"' && span[^1] == '"')
+        {
+            return text;
+        }
+
+        // `foo` is valid
+        return $"\"{text}\"";
     }
 
     /// <summary>
@@ -161,6 +211,11 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
         return logFile;
     }
 
+    /// <summary>
+    /// Detect Logfile name is valid or not
+    /// </summary>
+    /// <param name="fileName"></param>
+    /// <returns></returns>
     internal static bool IsValidLogFileName(string? fileName)
     {
         // missing filename is not valid
