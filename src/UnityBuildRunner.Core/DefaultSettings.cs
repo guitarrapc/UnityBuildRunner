@@ -92,7 +92,7 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
     /// <summary>
     /// Parse args and create <see cref="DefaultSettings"/>.
     /// </summary>
-    public static bool TryParse(string[] args, string unityPath, TimeSpan timeout, [NotNullWhen(true)] out DefaultSettings? settings)
+    public static bool TryParse(IReadOnlyList<string> args, string unityPath, TimeSpan timeout, [NotNullWhen(true)] out DefaultSettings? settings)
     {
         try
         {
