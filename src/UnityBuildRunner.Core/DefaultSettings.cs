@@ -128,7 +128,7 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
         }
 
         var arguments = args.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
-        var argumentString = string.Join(" ", arguments.Select(s => s.First() == '-' ? s : "\"" + s + "\""));
+        var argumentString = string.Join(" ", arguments.Select(s => s.AsSpan()[0] == '-' ? s : $"\"{s}\""));
 
         // WorkingDirectory should be cli launch path.
         var workingDirectory = Directory.GetCurrentDirectory();
