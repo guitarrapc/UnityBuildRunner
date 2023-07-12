@@ -170,7 +170,13 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
             throw new ArgumentException($"Argument end with \" but not begin with \", please complete quote. input: {text}");
         }
 
-        // `"foo"` is valid
+        // `foo"foo` or `foo"foo"foo` is invalid
+        if (span[1..^1].Contains('"'))
+        {
+            throw new ArgumentException($"Argument contains \", but is invalid. input: {text}");
+        }
+
+        // `""` and `"foo"` is valid
         if (span.Length >= 2 && span[0] == '"' && span[^1] == '"')
         {
             return text;

@@ -121,6 +121,10 @@ public class DefaultSettingsTest : IDisposable
     [InlineData("\"")]
     [InlineData("\"foo")]
     [InlineData("foo\"")]
+    [InlineData("fo\"o")]
+    [InlineData("f\"o\"o")]
+    [InlineData("\"fo\"o\"")]
+    [InlineData("\"f\"o\"o\"")]
     public void QuoteStringInvalidInput(string input)
     {
         Assert.Throws<ArgumentException>(() => DefaultSettings.QuoteString(input));
