@@ -58,6 +58,7 @@ public class DefaultBuilder : IBuilder
         logger.LogInformation($"  - Command:     {settings.UnityPath} {settings.ArgumentString}");
         logger.LogInformation($"  - WorkingDir:  {settings.WorkingDirectory}");
         logger.LogInformation($"  - LogFilePath: {settings.LogFilePath}");
+        logger.LogInformation($"  - Timeout:     {settings.TimeOut}");
         var sw = Stopwatch.StartNew();
         using var process = Process.Start(new ProcessStartInfo()
         {
