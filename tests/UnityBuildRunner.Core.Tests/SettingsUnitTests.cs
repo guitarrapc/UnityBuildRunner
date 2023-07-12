@@ -97,6 +97,7 @@ public class DefaultSettingsTest : IDisposable
     [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", @"foo\bar\baz", "-executeMethod", "MethodName", "-quite" }, "-logfile \"hoge.log\" -bathmode -nographics -projectpath \"foo\\bar\\baz\" -executeMethod \"MethodName\" -quite")]
     [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", @"foo\bar\baz\", "-executeMethod", "MethodName", "-quite" }, "-logfile \"hoge.log\" -bathmode -nographics -projectpath \"foo\\bar\\baz\\\" -executeMethod \"MethodName\" -quite")]
     [InlineData(new[] { "-logfile", "\"hoge.log\"", "-bathmode", "-nographics", "-projectpath", @"""foo\bar\baz\""", "-executeMethod", "\"MethodName\"", "-quite" }, "-logfile \"hoge.log\" -bathmode -nographics -projectpath \"foo\\bar\\baz\\\" -executeMethod \"MethodName\" -quite")] // input is already quoted
+    [InlineData(new[] { "-logfile", "\"hoge.log\"", "-bathmode", "-nographics", "-projectpath", @"""foo\bar\baz\""", "-executeMethod", "MethodName", "-quite" }, "-logfile \"hoge.log\" -bathmode -nographics -projectpath \"foo\\bar\\baz\\\" -executeMethod \"MethodName\" -quite")] // input is already quoted
     public void ArgsumentStringShouldFormated(string[] actual, string expected)
     {
         ISettings settings = DefaultSettings.Parse(actual, _unityPath, _timeout);
