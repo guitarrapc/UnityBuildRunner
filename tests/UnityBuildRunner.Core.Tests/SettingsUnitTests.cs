@@ -118,6 +118,7 @@ public class DefaultSettingsTest : IDisposable
     }
 
     [Theory]
+    [InlineData("")]
     [InlineData("\"")]
     [InlineData("\"foo")]
     [InlineData("foo\"")]

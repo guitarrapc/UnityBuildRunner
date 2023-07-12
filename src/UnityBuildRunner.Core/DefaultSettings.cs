@@ -152,10 +152,16 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
     {
         var span = text.AsSpan();
 
+        // `` is invalid
+        if (span.Length == 0)
+        {
+            throw new ArgumentException($"Argument is empty and is not valid string to quote. input: {text}");
+        }
+
         // `"` is invalid
         if (span.Length == 1 && span[0] == '"')
         {
-            throw new ArgumentException($"Argument is \" and is not valid string to quote.. input: {text}");
+            throw new ArgumentException($"Argument is \" and is not valid string to quote. input: {text}");
         }
 
         // `"foo` is invalid
