@@ -98,7 +98,7 @@ public class DefaultBuilder : IBuilder
                 else
                 {
                     // No log file means build not started.
-                    throw new BuildLogNotFoundException($"Unity Process not created logfile.", settings.LogFilePath, Path.Combine(settings.WorkingDirectory, settings.LogFilePath));
+                    throw new BuildLogNotFoundException($"Unity Process not created logfile. Hint: This might be log file permission issue or temporary failure. Re-run build and see reproduce or not.", settings.LogFilePath, Path.Combine(settings.WorkingDirectory, settings.LogFilePath));
                 }
             }
 
