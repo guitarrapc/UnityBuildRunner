@@ -75,30 +75,39 @@ public class DefaultBuilder : IBuilder
         }
 
         var unityProcessExitCode = 0;
-        var logFileFound = false;
         try
         {
             // wait for log file generated.
+            var waitingLongTime = false;
             while (!process.HasExited)
             {
-                logFileFound = File.Exists(settings.LogFilePath);
-                if (logFileFound) break;
+                ct.ThrowIfCancellationRequested();
 
-                // retry for 10 seconds.
-                if (sw.Elapsed.TotalSeconds < 10)
+                if (File.Exists(settings.LogFilePath)) break;
+
+                // Log waiting message.
+                if (sw.Elapsed.TotalSeconds > 10 && !waitingLongTime)
                 {
-                    await Task.Delay(TimeSpan.FromMilliseconds(10), ct).ConfigureAwait(false);
+                    waitingLongTime = true;
+                    logger.LogWarning("Waiting Unity creates log file takes long time, still waiting.");
+                }
+
+                // Some large repository's first Unity launch takes huge wait time until log file generated. However waiting more than 5min would be too slow and unnatural.
+                if (sw.Elapsed.TotalMinutes <= 5)
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(100), ct).ConfigureAwait(false);
                 }
                 else
                 {
-                    throw new BuildLogNotFoundException($"Unity Process not created logfile.", settings.LogFilePath, Path.Combine(settings.WorkingDirectory, settings.LogFilePath));
+                    // No log file means build not started.
+                    throw new BuildLogNotFoundException($"Unity Process not created logfile. Hint: This might be log file permission issue or temporary failure. Re-run build and see reproduce or not.", settings.LogFilePath, Path.Combine(settings.WorkingDirectory, settings.LogFilePath));
                 }
             }
 
-            // log file generated but process immediately exited.
+            // log file generated but process immediately exited. This is unexpected but unity may have some trouble with.
             if (process.HasExited)
             {
-                throw new OperationCanceledException($"Unity process started but build unexpectedly finished.");
+                throw new OperationCanceledException($"Unity process started but unexpectedly finished before build.");
             }
 
             using (var file = File.Open(settings.LogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
@@ -107,6 +116,8 @@ public class DefaultBuilder : IBuilder
                 // read logs and redirect to stdout
                 while (!process.HasExited)
                 {
+                    ct.ThrowIfCancellationRequested();
+
                     ReadAndFilterLog(reader, errorFilter);
                     await Task.Delay(TimeSpan.FromMilliseconds(500), ct).ConfigureAwait(false);
                 }
