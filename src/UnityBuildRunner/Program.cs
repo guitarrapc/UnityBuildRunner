@@ -11,7 +11,7 @@ app.Run();
 
 public class UnityBuildRunnerCommand : ConsoleAppBase
 {
-    private const string DefaultTimeout = "01:00:00";
+    private const string DefaultTimeout = "02:00:00"; // 2 hours
 
     private readonly ILogger<UnityBuildRunnerCommand> logger;
     private readonly TimeSpan timeoutDefault;
