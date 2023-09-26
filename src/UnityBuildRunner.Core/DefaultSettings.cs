@@ -112,7 +112,7 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
     public static DefaultSettings Parse(IReadOnlyList<string> args, string unityPath, TimeSpan timeout)
     {
         // Unity Path
-        var unityPathFixed = !string.IsNullOrWhiteSpace(unityPath) ? unityPath : Environment.GetEnvironmentVariable(ISettings.UNITY_PATH_ENVVAR_KEY) ?? throw new ArgumentNullException("Unity Path not specified. Please pass Unity Executable path with argument '--unity-path' or environment variable '{ISettings.UNITY_PATH_ENVVAR_KEY}'.");
+        var unityPathFixed = !string.IsNullOrWhiteSpace(unityPath) ? unityPath : Environment.GetEnvironmentVariable(ISettings.UNITY_PATH_ENVVAR_KEY) ?? throw new ArgumentNullException($"Unity Path not specified. Please pass Unity Executable path with argument '--unity-path' or environment variable '{ISettings.UNITY_PATH_ENVVAR_KEY}'.");
 
         // parse and fallback logfilePath
         var logFilePath = ParseLogFile(args);
