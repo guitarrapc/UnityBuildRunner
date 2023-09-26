@@ -90,8 +90,8 @@ public class DefaultBuilder : IBuilder
                     logger.LogWarning("Waiting Unity creates log file takes long time, still waiting.");
                 }
 
-                // retry until cancellation requested. Some large repository's first Unity launch takes huge wait time until log file generated. This can't be predictable which leds static time wait not suitable.
-                if (!ct.IsCancellationRequested)
+                // Some large repository's first Unity launch takes huge wait time until log file generated. However waiting more than 5min would be too slow and unnatural.
+                if (sw.Elapsed.TotalMinutes <= 5)
                 {
                     await Task.Delay(TimeSpan.FromMilliseconds(100), ct).ConfigureAwait(false);
                 }
