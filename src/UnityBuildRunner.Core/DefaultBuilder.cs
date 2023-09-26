@@ -81,6 +81,8 @@ public class DefaultBuilder : IBuilder
             var waitingLongTime = false;
             while (!process.HasExited)
             {
+                ct.ThrowIfCancellationRequested();
+
                 if (File.Exists(settings.LogFilePath)) break;
 
                 // Log waiting message.
@@ -114,6 +116,8 @@ public class DefaultBuilder : IBuilder
                 // read logs and redirect to stdout
                 while (!process.HasExited)
                 {
+                    ct.ThrowIfCancellationRequested();
+
                     ReadAndFilterLog(reader, errorFilter);
                     await Task.Delay(TimeSpan.FromMilliseconds(500), ct).ConfigureAwait(false);
                 }
