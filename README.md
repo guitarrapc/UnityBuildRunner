@@ -11,7 +11,7 @@ This tool enable you stdout Unity Build log on windows,  and control Timeout.
 
 # Motivation
 
-Windows Unity BatchBuild not provide Unity Build log StdOut option. This small tool provide realtime stdout build logs and build timeout control.
+Windows Unity BatchBuild not provide Unity Build log standard output option. This small tool provide realtime stdout build log output and build timeout control.
 
 # Installation
 
@@ -43,7 +43,7 @@ Usage: UnityBuildRunner [options...]
 
 Options:
   -unity-path, --unity-path <String>    Full Path to the Unity.exe (Leave empty when use 'UnityPath' Environment variables instead.) (Default: )
-  -timeout, --timeout <String>          Timeout to terminate execution within. default: "00:60:00" (Default: 00:60:00)
+  -timeout, --timeout <String>          Timeout to terminate execution within. default: "00:60:00" (Default: 02:00:00)
 
 Commands:
   help       Display help.
