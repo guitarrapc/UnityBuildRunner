@@ -4,7 +4,7 @@ using Xunit;
 
 namespace UnityBuildRunner.Core.Tests;
 
-public class ErrorFilterTest
+public class DefaultErrorFilterTest
 {
     [Theory]
     [InlineData(
@@ -24,7 +24,7 @@ public class ErrorFilterTest
         "Assets/Externals/Plugins/Zenject/Source/Binding/Binders/NonLazyBinder.cs(10,16): error CS0246: The type or namespace name `IfNotBoundBinder' could not be found. Are you missing an assembly reference?",
         @"BatchMode: Unity has not been activated with a valid License. Could be a new activation or renewal...
         DisplayProgressbar: Unity license")]
-    public void ContainsFilterMessage(params string[] inputs)
+    public void DetectCSharpCompileError(params string[] inputs)
     {
         IErrorFilter errorFilter = new DefaultErrorFilter();
         var results = new List<string>();
@@ -37,10 +37,50 @@ public class ErrorFilterTest
     }
 
     [Theory]
+    [InlineData("Multiple Unity instances cannot open the same project.")]
+    [InlineData("Unity has not been activated")]
+    public void DetectUnityError(params string[] inputs)
+    {
+        IErrorFilter errorFilter = new DefaultErrorFilter();
+        var results = new List<string>();
+        foreach (var input in inputs)
+        {
+            errorFilter.Filter(input, result => results.Add(result.MatchPattern));
+        }
+        results.Should().NotBeEmpty();
+    }
+
+    [Theory]
+    [InlineData(
+        "Compiling shader \"Shader Graphs/UrpFoo\" pass \"\" (vp)",
+        "    Full variant space:         2",
+        "    After settings filtering:   2",
+        "    After built-in stripping:   2",
+        "    After scriptable stripping: 2",
+        "    Processed in 0.02 seconds",
+        "    starting compilation...",
+        "    finished in 0.22 seconds. Local cache hits 0 (0.00s CPU time), remote cache hits 0 (0.00s CPU time), compiled 2 variants (0.42s CPU time), skipped 0 variants",
+        "    Prepared data for serialisation in 0.00s",
+        "Serialized binary data for shader Shader Graphs/UrpTriplanar in 0.00s",
+        "    glcore (total internal programs: 21, unique: 21)",
+        "    vulkan (total internal programs: 34, unique: 34)",
+        "Shader error in 'Shader Graphs/UrpFoo': Compilation failed (other error) 'out of memory during compilation")]
+    public void SkipShaderError(params string[] inputs)
+    {
+        IErrorFilter errorFilter = new DefaultErrorFilter();
+        var results = new List<string>();
+        foreach (var input in inputs)
+        {
+            errorFilter.Filter(input, result => results.Add(result.MatchPattern));
+        }
+        results.Should().BeEmpty();
+    }
+
+    [Theory]
     [InlineData(
         "Unloading 64 Unused Serialized files (Serialized files now loaded: 0)",
         "System memory in use before: 63.0 MB.", "DisplayProgressbar: Unity Package Manager")]
-    public void NotContainsFilterMessage(params string[] inputs)
+    public void SkipNormalMessage(params string[] inputs)
     {
         IErrorFilter errorFilter = new DefaultErrorFilter();
         var results = new List<string>();
