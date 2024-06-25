@@ -1,13 +1,15 @@
+using System.IO;
 using UnityEditor;
 using UnityEditor.Build;
 
-public class BuildUnity
+public class BuildUnityMenu
 {
+    private static readonly string[] scenes = new[] { "Assets/Scenes/SampleScene.unity" };
+
     [MenuItem("MyTools/Build Windows IL2CPP Player")]
     public static void BuildWindowsIl2cppPlayer()
     {
-        var path = $"artifacts/WindowsPlayer/Build.il2cpp-player.exe";
-        string[] scenes = new string[] { "Assets/Scenes/SampleScene.unity" };
+        var path = "artifacts/WindowsPlayer/Build.il2cpp-player.exe";
 
         var buildPlayerOptions = new BuildPlayerOptions();
 
@@ -24,13 +26,15 @@ public class BuildUnity
 
         // Build
         BuildPipeline.BuildPlayer(buildPlayerOptions);
+
+        // Cleanup
+        CleanupDontship(path);
     }
 
     [MenuItem("MyTools/Build Windows IL2CPP DedicatedServer")]
     public static void BuildWindowsIl2cppServer()
     {
-        var path = $"artifacts/WindowsServer/Build.il2cpp-dedicatedserver.exe";
-        string[] scenes = new string[] { "Assets/Scenes/SampleScene.unity" };
+        var path = "artifacts/WindowsServer/Build.il2cpp-server.exe";
 
         var buildPlayerOptions = new BuildPlayerOptions();
 
@@ -47,13 +51,15 @@ public class BuildUnity
 
         // Build
         BuildPipeline.BuildPlayer(buildPlayerOptions);
+
+        // Cleanup
+        CleanupDontship(path);
     }
 
     [MenuItem("MyTools/Build Linux IL2CPP Player")]
     public static void BuildLinuxIl2cppPlayer()
     {
-        var path = $"artifacts/LinuxPlayer/Build.il2cpp-player.x86_64";
-        string[] scenes = new string[] { "Assets/Scenes/SampleScene.unity" };
+        var path = "artifacts/LinuxPlayer/Build.il2cpp-player.x86_64";
 
         var buildPlayerOptions = new BuildPlayerOptions();
 
@@ -70,13 +76,15 @@ public class BuildUnity
 
         // Build
         BuildPipeline.BuildPlayer(buildPlayerOptions);
+
+        // Cleanup
+        CleanupDontship(path);
     }
 
     [MenuItem("MyTools/Build Linux IL2CPP DedicatedServer")]
     public static void BuildLinuxIl2cppServer()
     {
-        var path = $"artifacts/LinuxServer/Build.il2cpp-dedicatedserver.x86_64";
-        string[] scenes = new string[] { "Assets/Scenes/SampleScene.unity" };
+        var path = "artifacts/LinuxServer/Build.il2cpp-server.x86_64";
 
         var buildPlayerOptions = new BuildPlayerOptions();
 
@@ -93,8 +101,15 @@ public class BuildUnity
 
         // Build
         BuildPipeline.BuildPlayer(buildPlayerOptions);
+
+        // Cleanup
+        CleanupDontship(path);
     }
 
+    /// <summary>
+    /// Enable IL2CPP ScriptingBackend
+    /// </summary>
+    /// <param name="buildTarget"></param>
     private static void EnableIl2Cpp(NamedBuildTarget buildTarget)
     {
         // IL2CPP Code Generation = OptimizeSize => faster build than OptimizeSpeed
@@ -104,8 +119,30 @@ public class BuildUnity
         PlayerSettings.SetIl2CppCodeGeneration(buildTarget, Il2CppCodeGeneration.OptimizeSize);
     }
 
+    /// <summary>
+    /// Enable Mono ScriptingBackend
+    /// </summary>
+    /// <param name="buildTarget"></param>
     private static void EnableMono(NamedBuildTarget buildTarget)
     {
         PlayerSettings.SetScriptingBackend(buildTarget, ScriptingImplementation.Mono2x);
+    }
+
+    /// <summary>
+    /// Build Cleanup
+    /// </summary>
+    /// <param name="locationPathName"></param>
+    private static void CleanupDontship(string locationPathName)
+    {
+        // Cleanup IL2CPP debugger information directories
+        var dir = Path.GetDirectoryName(locationPathName);
+        var fileName = Path.GetFileNameWithoutExtension(locationPathName);
+        var removeTargets = new[] { $"{dir}/{fileName}_BackUpThisFolder_ButDontShipItWithYourGame" };
+
+        foreach (var target in removeTargets)
+        {
+            if (!Directory.Exists(target)) continue;
+            Directory.Delete(target, true);
+        }
     }
 }
