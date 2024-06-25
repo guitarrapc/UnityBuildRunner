@@ -6,7 +6,7 @@ public class BuildUnity
     [MenuItem("MyTools/Build Windows IL2CPP Player")]
     public static void BuildWindowsIl2cppPlayer()
     {
-        var path = $"artifacts/Build.il2cpp-player.exe";
+        var path = $"artifacts/WindowsPlayer/Build.il2cpp-player.exe";
         string[] scenes = new string[] { "Assets/Scenes/SampleScene.unity" };
 
         var buildPlayerOptions = new BuildPlayerOptions();
@@ -29,7 +29,7 @@ public class BuildUnity
     [MenuItem("MyTools/Build Windows IL2CPP DedicatedServer")]
     public static void BuildWindowsIl2cppServer()
     {
-        var path = $"artifacts/Build.il2cpp-dedicatedserver.exe";
+        var path = $"artifacts/WindowsServer/Build.il2cpp-dedicatedserver.exe";
         string[] scenes = new string[] { "Assets/Scenes/SampleScene.unity" };
 
         var buildPlayerOptions = new BuildPlayerOptions();
@@ -52,7 +52,7 @@ public class BuildUnity
     [MenuItem("MyTools/Build Linux IL2CPP Player")]
     public static void BuildLinuxIl2cppPlayer()
     {
-        var path = $"artifacts/Build.il2cpp-player.x86_64";
+        var path = $"artifacts/LinuxPlayer/Build.il2cpp-player.x86_64";
         string[] scenes = new string[] { "Assets/Scenes/SampleScene.unity" };
 
         var buildPlayerOptions = new BuildPlayerOptions();
@@ -75,7 +75,7 @@ public class BuildUnity
     [MenuItem("MyTools/Build Linux IL2CPP DedicatedServer")]
     public static void BuildLinuxIl2cppServer()
     {
-        var path = $"artifacts/Build.il2cpp-dedicatedserver.x86_64";
+        var path = $"artifacts/LinuxServer/Build.il2cpp-dedicatedserver.x86_64";
         string[] scenes = new string[] { "Assets/Scenes/SampleScene.unity" };
 
         var buildPlayerOptions = new BuildPlayerOptions();
