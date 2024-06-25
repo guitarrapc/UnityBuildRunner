@@ -97,7 +97,15 @@ public class BuildUnity
 
     private static void EnableIl2Cpp(NamedBuildTarget buildTarget)
     {
-        // IL2CPP Code Generation = Faster runtime
-        PlayerSettings.SetIl2CppCodeGeneration(buildTarget, Il2CppCodeGeneration.OptimizeSpeed);
+        // IL2CPP Code Generation = OptimizeSize => faster build than OptimizeSpeed
+        PlayerSettings.SetScriptingBackend(buildTarget, ScriptingImplementation.IL2CPP);
+        PlayerSettings.SetManagedStrippingLevel(buildTarget, ManagedStrippingLevel.Minimal);
+        PlayerSettings.SetIl2CppCompilerConfiguration(buildTarget, Il2CppCompilerConfiguration.Debug);
+        PlayerSettings.SetIl2CppCodeGeneration(buildTarget, Il2CppCodeGeneration.OptimizeSize);
+    }
+
+    private static void EnableMono(NamedBuildTarget buildTarget)
+    {
+        PlayerSettings.SetScriptingBackend(buildTarget, ScriptingImplementation.Mono2x);
     }
 }
