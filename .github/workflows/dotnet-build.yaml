@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Get PR branch
-        uses: xt0rted/pull-request-comment-branch@v1
+        uses: xt0rted/pull-request-comment-branch@v2
         id: comment-branch
         if: ${{ github.event_name == 'issue_comment' }}
       - uses: actions/checkout@v4
