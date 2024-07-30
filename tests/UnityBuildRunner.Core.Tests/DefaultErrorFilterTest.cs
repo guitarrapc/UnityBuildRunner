@@ -1,5 +1,4 @@
 using FluentAssertions;
-using System.Collections.Generic;
 using Xunit;
 
 namespace UnityBuildRunner.Core.Tests;

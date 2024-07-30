@@ -1,5 +1,3 @@
-using System;
-
 namespace UnityBuildRunner.Core;
 internal class BuildErrorFoundException : Exception
 {
@@ -7,7 +5,6 @@ internal class BuildErrorFoundException : Exception
     private string message;
 
     public string StdOut { get; }
-
     public string MatchPattern { get; }
 
     public BuildErrorFoundException(string message, string stdout, string matchPattern)

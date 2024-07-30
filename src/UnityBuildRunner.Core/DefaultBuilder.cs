@@ -1,9 +1,5 @@
 using Microsoft.Extensions.Logging;
-using System;
 using System.Diagnostics;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace UnityBuildRunner.Core;
 
@@ -19,9 +15,8 @@ public interface IBuilder
     /// <summary>
     /// Run Unity build.
     /// </summary>
-    /// <param name="ct"></param>
     /// <returns></returns>
-    Task BuildAsync(CancellationToken ct);
+    Task BuildAsync();
 }
 
 /// <summary>
@@ -47,8 +42,10 @@ public class DefaultBuilder : IBuilder
         this.errorFilter = errorFilter;
     }
 
-    public async Task BuildAsync(CancellationToken ct = default)
+    public async Task BuildAsync()
     {
+        var ct = settings.Cts.Token;
+
         // Initialize
         logger.LogInformation($"Initializing UnityBuildRunner.");
         await InitializeAsync(settings.LogFilePath, ct).ConfigureAwait(false);
@@ -67,12 +64,7 @@ public class DefaultBuilder : IBuilder
             WorkingDirectory = settings.WorkingDirectory,
             UseShellExecute = false,
             CreateNoWindow = true,
-        });
-
-        if (process is null)
-        {
-            throw new OperationCanceledException("Could not start Unity. Somthing blocked creating process.");
-        }
+        }) ?? throw new OperationCanceledException("Could not start Unity. Somthing blocked creating process.");
 
         var unityProcessExitCode = 0;
         try

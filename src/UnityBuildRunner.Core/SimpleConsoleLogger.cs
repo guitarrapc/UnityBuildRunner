@@ -1,21 +1,13 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace UnityBuildRunner.Core;
 
-public class SimpleConsoleLoggerProvider<T> : ILoggerProvider
+public class SimpleConsoleLoggerProvider : ILoggerProvider
 {
-    readonly SimpleConsoleLogger<T> logger;
-
-    public SimpleConsoleLoggerProvider()
-    {
-        logger = new SimpleConsoleLogger<T>();
-    }
-
     public ILogger CreateLogger(string categoryName)
     {
-        return logger;
+        return new SimpleConsoleLogger(categoryName);
     }
 
     public void Dispose()
@@ -23,11 +15,12 @@ public class SimpleConsoleLoggerProvider<T> : ILoggerProvider
     }
 }
 
-public class SimpleConsoleLogger<T> : ILogger<T>
+public class SimpleConsoleLogger(string loggerName, LogLevel minLevel) : ILogger
 {
-    public SimpleConsoleLogger()
-    {
-    }
+    public string LoggerName { get; } = loggerName;
+
+    public SimpleConsoleLogger(string loggerName) : this(loggerName, LogLevel.Information)
+    { }
 
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull
     {
@@ -36,19 +29,20 @@ public class SimpleConsoleLogger<T> : ILogger<T>
 
     public bool IsEnabled(LogLevel logLevel)
     {
-        return true;
+        return logLevel >= minLevel;
     }
 
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
-        ArgumentNullException.ThrowIfNull(formatter);
+        if (!IsEnabled(logLevel)) return;
+        if (formatter is null) return;
+        var level = logLevel >= LogLevel.Error ? $"[{logLevel}] " : "";
 
         var msg = formatter(state, exception);
 
-
         if (!string.IsNullOrEmpty(msg))
         {
-            Console.WriteLine(msg);
+            Console.WriteLine($"{level}{msg}");
         }
 
         if (exception is not null)
@@ -69,9 +63,9 @@ public class SimpleConsoleLogger<T> : ILogger<T>
 
 public static class SimpleConsoleLoggerExtensions
 {
-    public static ILoggingBuilder AddSimpleConsole<T>(this ILoggingBuilder builder)
+    public static ILoggingBuilder AddSimpleConsole(this ILoggingBuilder builder)
     {
-        builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, SimpleConsoleLoggerProvider<T>>());
+        builder.Services.AddSingleton<ILoggerProvider, SimpleConsoleLoggerProvider>();
         return builder;
     }
 }

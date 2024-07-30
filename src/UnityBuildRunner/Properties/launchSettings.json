@@ -4,6 +4,10 @@
       "commandName": "Project",
       "commandLineArgs": ""
     },
+    "UnityBuildRunner (help)": {
+      "commandName": "Project",
+      "commandLineArgs": "--help"
+    },
     "UnityBuildRunner (unity-path)": {
       "commandName": "Project",
       "commandLineArgs": "--unity-path \"C:/Program Files/Unity/Hub/Editor/2021.3.17f1/Editor/Unity.exe\" -quit -batchmode -nographics -silent-crashes -logfile log.log -buildTarget StandaloneWindows64 -projectPath ../../../../../sandbox/Sandbox.Unity -executeMethod BuildUnity.BuildGame"

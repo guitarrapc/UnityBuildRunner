@@ -1,10 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Linq;
-using System.Threading;
-
 namespace UnityBuildRunner.Core;
 
 /// <summary>
@@ -12,11 +5,6 @@ namespace UnityBuildRunner.Core;
 /// </summary>
 public interface ISettings
 {
-    /// <summary>
-    /// Environment variable key to obtain Unity executable path.
-    /// </summary>
-    public const string UNITY_PATH_ENVVAR_KEY = "UnityPath";
-
     /// <summary>
     /// Full argument passed to settings.
     /// </summary>
@@ -41,13 +29,15 @@ public interface ISettings
     /// UnityBuild timeout
     /// </summary>
     TimeSpan TimeOut { get; init; }
+    /// <summary>
+    /// Cancellation Token Source. fire when timeout or Ctrl+C has triggered.
+    /// </summary>
+    CancellationTokenSource Cts { get; init; }
 
     /// <summary>
-    /// Create CancelltaionTokenSource from <see cref="ISettings"/>.
+    /// Validate settings is correct.
     /// </summary>
-    /// <param name="linkCancellationToken">CancellationToken to link with.</param>
-    /// <returns></returns>
-    CancellationTokenSource CreateCancellationTokenSource(CancellationToken? linkCancellationToken);
+    void Validate();
 }
 
 /// <summary>
@@ -59,7 +49,8 @@ public interface ISettings
 /// <param name="LogFilePath"></param>
 /// <param name="WorkingDirectory"></param>
 /// <param name="TimeOut"></param>
-public record DefaultSettings(string[] Args, string ArgumentString, string UnityPath, string LogFilePath, string WorkingDirectory, TimeSpan TimeOut) : ISettings
+/// <param name="Cts"></param>
+public record DefaultSettings(string[] Args, string ArgumentString, string UnityPath, string LogFilePath, string WorkingDirectory, TimeSpan TimeOut, CancellationTokenSource Cts) : ISettings
 {
     /// <summary>
     /// Validate Settings is correct.
@@ -67,74 +58,47 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
     public void Validate()
     {
         // validate
-        if (string.IsNullOrWhiteSpace(UnityPath))
-            throw new ArgumentException($"Unity Path not specified. Please pass Unity Executable path with argument '--unity-path' or environment variable '{ISettings.UNITY_PATH_ENVVAR_KEY}'.");
-        if (string.IsNullOrEmpty(LogFilePath))
-            throw new ArgumentException("Missing '-logFile filename' argument. Make sure you had targeted any log file path.");
         if (!File.Exists(UnityPath))
+        {
             throw new FileNotFoundException($"Specified unity executable not found. path: {UnityPath}");
-    }
-
-    /// <inheritdoc/>
-    public CancellationTokenSource CreateCancellationTokenSource(CancellationToken? linkCancellationToken = null)
-    {
-        var timeoutToken = new CancellationTokenSource(TimeOut);
-        if (linkCancellationToken is not null && linkCancellationToken is CancellationToken ct)
-        {
-            return CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutToken.Token);
-        }
-        else
-        {
-            return timeoutToken;
         }
     }
 
     /// <summary>
-    /// Parse args and create <see cref="DefaultSettings"/>.
+    /// Create Default settings <see cref="DefaultSettings"/>.
     /// </summary>
-    public static bool TryParse(IReadOnlyList<string> args, string unityPath, TimeSpan timeout, [NotNullWhen(true)] out DefaultSettings? settings)
+    public static DefaultSettings Create(IReadOnlyList<string> args, string unityPath, TimeSpan timeout, CancellationToken cancellationToken)
     {
-        try
-        {
-            settings = Parse(args, unityPath, timeout);
-            return true;
-        }
-        catch (Exception)
-        {
-            settings = null;
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Parse args and create <see cref="DefaultSettings"/>.
-    /// </summary>
-    public static DefaultSettings Parse(IReadOnlyList<string> args, string unityPath, TimeSpan timeout)
-    {
-        // Unity Path
-        var unityPathFixed = !string.IsNullOrWhiteSpace(unityPath) ? unityPath : Environment.GetEnvironmentVariable(ISettings.UNITY_PATH_ENVVAR_KEY) ?? throw new ArgumentNullException($"Unity Path not specified. Please pass Unity Executable path with argument '--unity-path' or environment variable '{ISettings.UNITY_PATH_ENVVAR_KEY}'.");
-
-        // parse and fallback logfilePath
+        // -logFile handling
         var logFilePath = ParseLogFile(args);
         if (!IsValidLogFileName(logFilePath))
         {
+            const string defaultLogFileName = "unitybuild.log";
             var inputLogFilePath = logFilePath;
-            logFilePath = "unitybuild.log";
             // remove current `-logFile "-"` and replace to `-logFile unitybuild.log`
             var tmpArgs = string.IsNullOrEmpty(logFilePath)
-                ? args.Except(new[] { "-logFile" }, StringComparer.OrdinalIgnoreCase).Concat(new[] { "-logFile", logFilePath })
-                : args.Except(new[] { "-logFile" }, StringComparer.OrdinalIgnoreCase).Except(new[] { inputLogFilePath }).Concat(new[] { "-logFile", logFilePath });
+                ? args.Except(["-logFile"], StringComparer.OrdinalIgnoreCase).Concat(["-logFile", defaultLogFileName])
+                : args.Except(["-logFile"], StringComparer.OrdinalIgnoreCase).Except([inputLogFilePath]).Concat(["-logFile", defaultLogFileName]);
             args = tmpArgs.ToArray();
         }
 
-        var arguments = args.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
-        var argumentString = string.Join(" ", arguments.Select(s => s.AsSpan()[0] == '-' ? s : QuoteString(s)));
+        // format arguments
+        var arguments = args
+            .Where(x => !string.IsNullOrWhiteSpace(x)) // remove spaced element `["a", "b", "", "d"]` -> ["a", "b", "d"]
+            .ToArray();
+        // change `-foo value` -> `-foo "value"`
+        var quoteArgs = arguments.Select(s => s.AsSpan()[0] == '-' ? s : QuoteString(s));
+        var argumentString = string.Join(" ", quoteArgs);
 
-        // WorkingDirectory should be cli launch path.
+        // WorkingDirectory should be cli launch path
         var workingDirectory = Directory.GetCurrentDirectory();
 
+        // Create linked cancellationToken for both Timeout & Ctrl+C
+        var timeoutToken = new CancellationTokenSource(timeout);
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutToken.Token);
+
         // Create settings
-        var settings = new DefaultSettings(arguments, argumentString, unityPathFixed, logFilePath, workingDirectory, timeout);
+        var settings = new DefaultSettings(arguments, argumentString, unityPath, logFilePath, workingDirectory, timeout, cts);
 
         // Validate settings
         settings.Validate();
@@ -158,20 +122,23 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
             throw new ArgumentException($"Argument is empty and is not valid string to quote. input: {text}");
         }
 
+        var firstChar = span[0];
+        var lastChar = span[^1];
+
         // `"` is invalid
-        if (span.Length == 1 && span[0] == '"')
+        if (span.Length == 1 && firstChar == '"')
         {
             throw new ArgumentException($"Argument is \" and is not valid string to quote. input: {text}");
         }
 
         // `"foo` is invalid
-        if (span.Length >= 2 && span[0] == '"' && span[^1] != '"')
+        if (span.Length >= 2 && firstChar == '"' && lastChar != '"')
         {
             throw new ArgumentException($"Argument begin with \" but not closed, please complete quote. input: {text}");
         }
 
         // `foo"` is invalid
-        if (span.Length >= 2 && span[0] != '"' && span[^1] == '"')
+        if (span.Length >= 2 && firstChar != '"' && lastChar == '"')
         {
             throw new ArgumentException($"Argument end with \" but not begin with \", please complete quote. input: {text}");
         }
@@ -183,7 +150,7 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
         }
 
         // `""` and `"foo"` is valid
-        if (span.Length >= 2 && span[0] == '"' && span[^1] == '"')
+        if (span.Length >= 2 && firstChar == '"' && lastChar == '"')
         {
             return text;
         }
