@@ -2,22 +2,12 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
-    <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
 
-    <Version>1.0.0</Version>
-    <AssemblyVersion>$(Version)</AssemblyVersion>
-    <PackAsTool>true</PackAsTool>
+    <!-- NuGet -->
     <PackageId>UnityBuildRunner</PackageId>
-    <Authors>guitarrapc</Authors>
-    <Description>Unity Build Runner. dotnet global tool of UnityBuildRunner.Core. Offers Stdout on Windows.</Description>
-    <PackageProjectUrl>https://github.com/guitarrapc/UnityBuildRunner</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/guitarrapc/UnityBuildRunner</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageTags>Unity</PackageTags>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <Description>dotnet tool to run Unity build and offers realtime output to stdout on Windows.</Description>
+    <IsPackable>true</IsPackable>
+    <PackAsTool>true</PackAsTool>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,14 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\LICENSE.md">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="ConsoleAppFramework" Version="4.2.4" />
+    <PackageReference Include="ConsoleAppFramework" />
   </ItemGroup>
 
 </Project>
