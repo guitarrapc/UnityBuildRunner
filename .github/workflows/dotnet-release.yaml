@@ -15,16 +15,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: guitarrapc/actions/.github/actions/setup-dotnet@main
-        with:
-          dotnet-version: |
-            6.0.x
-            7.0.x
-      # tag
-      - run: echo "GIT_TAG=${GITHUB_REF#refs/tags/}" | tee -a "$GITHUB_ENV"
       # build
-      - run: dotnet build -c ${{ env.BUILD_CONFIG }} -p:Version=${{ env.GIT_TAG }}
+      - run: dotnet build -c ${{ env.BUILD_CONFIG }} -p:Version=${{ github.event.ref }}
       # pack
-      - run: dotnet pack -c ${{ env.BUILD_CONFIG }} -p:Version=${{ env.GIT_TAG }} -o ./pack
+      - run: dotnet pack -c ${{ env.BUILD_CONFIG }} -p:Version=${{ github.event.ref }} -o ./pack
       - uses: actions/upload-artifact@v3
         with:
           name: nuget
@@ -35,10 +29,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: guitarrapc/actions/.github/actions/setup-dotnet@main
-        with:
-          dotnet-version: |
-            6.0.x
-            7.0.x
       - run: echo "GIT_TAG=${GITHUB_REF#refs/tags/}" | tee -a "$GITHUB_ENV"
       # Create Release
       - uses: actions/create-release@v1
@@ -46,8 +36,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
+          tag_name: ${{ github.event.ref }}
+          release_name: ${{ github.event.ref }}
           draft: true
           prerelease: false
       - uses: actions/download-artifact@v3
