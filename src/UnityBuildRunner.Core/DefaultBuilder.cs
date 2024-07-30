@@ -25,7 +25,6 @@ public interface IBuilder
 public class DefaultBuilder : IBuilder
 {
     private readonly ISettings settings;
-    private readonly ILogger logger;
     private readonly IErrorFilter errorFilter;
     private BuildErrorCode buildErrorCode = BuildErrorCode.Success;
 
@@ -38,8 +37,8 @@ public class DefaultBuilder : IBuilder
     public DefaultBuilder(ISettings settings, ILogger logger, IErrorFilter errorFilter)
     {
         this.settings = settings;
-        this.logger = logger;
         this.errorFilter = errorFilter;
+        BuildLogger.SetLogger(logger);
     }
 
     public async Task BuildAsync()
@@ -47,15 +46,11 @@ public class DefaultBuilder : IBuilder
         var ct = settings.Cts.Token;
 
         // Initialize
-        logger.LogInformation($"Initializing UnityBuildRunner.");
+        BuildLogger.Initialize();
         await InitializeAsync(settings.LogFilePath, ct).ConfigureAwait(false);
 
         // Build
-        logger.LogInformation("Starting Unity Build.");
-        logger.LogInformation($"  - Command:     {settings.UnityPath} {settings.ArgumentString}");
-        logger.LogInformation($"  - WorkingDir:  {settings.WorkingDirectory}");
-        logger.LogInformation($"  - LogFilePath: {settings.LogFilePath}");
-        logger.LogInformation($"  - Timeout:     {settings.TimeOut}");
+        BuildLogger.StartBuild(settings);
         var sw = Stopwatch.StartNew();
         using var process = Process.Start(new ProcessStartInfo()
         {
@@ -81,7 +76,7 @@ public class DefaultBuilder : IBuilder
                 if (sw.Elapsed.TotalSeconds > 10 && !waitingLongTime)
                 {
                     waitingLongTime = true;
-                    logger.LogWarning("Waiting Unity creates log file takes long time, still waiting.");
+                    BuildLogger.WaitLogCreation();
                 }
 
                 // Some large repository's first Unity launch takes huge wait time until log file generated. However waiting more than 5min would be too slow and unnatural.
@@ -129,64 +124,62 @@ public class DefaultBuilder : IBuilder
         catch (OperationCanceledException ex) when (process is null)
         {
             // process could not create
-            logger.LogInformation($"Stopping build. {ex.Message}");
+            BuildLogger.StoppingBuildOperationCancel(ex);
             buildErrorCode = BuildErrorCode.ProcessNull;
         }
         catch (OperationCanceledException ex) when (process.HasExited)
         {
             // process immediately finished
-            logger.LogInformation($"Stopping build. {ex.Message}");
+            BuildLogger.StoppingBuildOperationCancel(ex);
             buildErrorCode = BuildErrorCode.ProcessImmediatelyExit;
         }
-        catch (OperationCanceledException) when (sw.Elapsed.TotalMilliseconds > settings.TimeOut.TotalMilliseconds)
+        catch (OperationCanceledException ex) when (sw.Elapsed.TotalMilliseconds > settings.TimeOut.TotalMilliseconds)
         {
             // Timeout
-            logger.LogInformation($"Stopping build. Timeout exceeded, {settings.TimeOut.TotalMinutes}min has been passed.");
+            BuildLogger.StoppingBuildTimeoutExceeded(ex, settings);
             buildErrorCode = BuildErrorCode.ProcessTimeout;
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
             // User cancel or any cancellation detected
-            logger.LogInformation("Stopping build. Operation canceled.");
+            BuildLogger.StoppingBuildOperationCancel(ex);
             buildErrorCode = BuildErrorCode.OperationCancelled;
         }
         catch (BuildErrorFoundException ex)
         {
-            logger.LogInformation($"Stopping build. {ex.Message} stdout: '{ex.StdOut}'");
+            BuildLogger.StoppingBuildBuildError(ex);
             buildErrorCode = BuildErrorCode.BuildErrorMessageFound;
         }
         catch (BuildLogNotFoundException ex)
         {
-            logger.LogCritical(ex, $"Stopping build. {ex.Message} logFile: '{ex.LogFilePath}', FullPath: '{ex.FullPath}'.");
+            BuildLogger.StoppingBuildBuildLogNotFound(ex);
             buildErrorCode = BuildErrorCode.LogFileNotFound;
         }
         catch (Exception ex)
         {
-            logger.LogCritical(ex, $"Stopping build. Error happen while building Unity. {ex.Message}");
+            BuildLogger.StoppingBuildUnknown(ex);
             buildErrorCode = BuildErrorCode.OtherError;
         }
         finally
         {
             sw.Stop();
 
+            // Unity's exit code 0 is not mean no error. Therefore, when Unity exitcode was 0 and UnityBuildRunner caught any exception, replace exitcode with custom error.
+            ExitCode = unityProcessExitCode == 0 ? buildErrorCode.GetAttrubute<ErrorExitCodeAttribute>()?.ExitCode ?? unityProcessExitCode : unityProcessExitCode;
+
             if (buildErrorCode is BuildErrorCode.Success)
             {
-                logger.LogInformation($"Unity Build successfully complete.");
+                BuildLogger.BuildSucceed(unityProcessExitCode, buildErrorCode, sw.Elapsed);
             }
             else
             {
-                logger.LogInformation($"Unity Build failed, error code '{buildErrorCode}'.");
+                BuildLogger.BuildFailed(unityProcessExitCode, buildErrorCode, sw.Elapsed);
             }
-            logger.LogInformation($"Build Elapsed Time {sw.Elapsed}");
-
-            // Unity's exit code 0 is not mean no error. Therefore, when Unity exitcode was 0 and UnityBuildRunner caught any exception, replace exitcode with custom error.
-            ExitCode = unityProcessExitCode == 0 ? buildErrorCode.GetAttrubute<ErrorExitCodeAttribute>()?.ExitCode ?? unityProcessExitCode : unityProcessExitCode;
-            logger.LogInformation($"Set ExitCode '{ExitCode}'.");
 
             // Assume exit Unity process
             if (process is not null && !process.HasExited)
             {
-                logger.LogInformation($"Killing unterminated process, id: {process.Id}.");
+                BuildLogger.PostKillProcess(process.Id);
                 process.Kill(true);
             }
         }
@@ -198,7 +191,7 @@ public class DefaultBuilder : IBuilder
     /// <param name="logFilePath"></param>
     /// <param name="ct"></param>
     /// <returns></returns>
-    private async Task InitializeAsync(string logFilePath, CancellationToken ct)
+    private static async Task InitializeAsync(string logFilePath, CancellationToken ct)
     {
         await AssumeLogFileInitialized(logFilePath, ct).ConfigureAwait(false);
     }
@@ -208,7 +201,7 @@ public class DefaultBuilder : IBuilder
     /// </summary>
     /// <param name="logFilePath"></param>
     /// <returns></returns>
-    private async Task AssumeLogFileInitialized(string logFilePath, CancellationToken ct)
+    private static async Task AssumeLogFileInitialized(string logFilePath, CancellationToken ct)
     {
         if (!File.Exists(logFilePath))
         {
@@ -226,7 +219,7 @@ public class DefaultBuilder : IBuilder
             }
             catch (IOException) when (i < retry + 1)
             {
-                logger.LogWarning($"Couldn't delete file {logFilePath}, retrying... ({i + 1}/{retry})");
+                BuildLogger.LogDeleteFailure(logFilePath, i + 1, retry);
                 await Task.Delay(TimeSpan.FromSeconds(1), ct).ConfigureAwait(false);
                 continue;
             }
@@ -239,7 +232,7 @@ public class DefaultBuilder : IBuilder
     /// <param name="reader"></param>
     /// <param name="errorFilter"></param>
     /// <exception cref="BuildErrorFoundException"></exception>
-    private void ReadAndFilterLog(StreamReader reader, IErrorFilter errorFilter)
+    private static void ReadAndFilterLog(StreamReader reader, IErrorFilter errorFilter)
     {
         var txt = reader.ReadToEnd();
         if (string.IsNullOrEmpty(txt))
@@ -248,7 +241,7 @@ public class DefaultBuilder : IBuilder
         }
 
         // Output current log.
-        logger.LogInformation(txt);
+        BuildLogger.BuildLog(txt);
 
         // Exception when error message found.
         errorFilter.Filter(txt, result => throw new BuildErrorFoundException($"Error filter caught error.", result.MatchPattern, result.MatchPattern));
