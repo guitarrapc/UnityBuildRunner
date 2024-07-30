@@ -1,7 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
-using System;
 
 namespace UnityBuildRunner.Core;
 
@@ -30,7 +29,7 @@ public class SimpleConsoleLogger<T> : ILogger<T>
     {
     }
 
-    public IDisposable BeginScope<TState>(TState state)
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull
     {
         return NullDisposable.Instance;
     }
@@ -42,7 +41,7 @@ public class SimpleConsoleLogger<T> : ILogger<T>
 
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
-        if (formatter == null) throw new ArgumentNullException(nameof(formatter));
+        ArgumentNullException.ThrowIfNull(formatter);
 
         var msg = formatter(state, exception);
 

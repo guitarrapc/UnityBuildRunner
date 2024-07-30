@@ -1,7 +1,4 @@
 using Microsoft.Extensions.Logging;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using UnityBuildRunner.Core;
 
 var builder = ConsoleApp.CreateBuilder(args);
@@ -9,33 +6,26 @@ var app = builder.Build();
 app.AddCommands<UnityBuildRunnerCommand>();
 app.Run();
 
-public class UnityBuildRunnerCommand : ConsoleAppBase
+public class UnityBuildRunnerCommand(ILogger<UnityBuildRunnerCommand> logger) : ConsoleAppBase
 {
     private const string DefaultTimeout = "02:00:00"; // 2 hours
 
-    private readonly ILogger<UnityBuildRunnerCommand> logger;
-    private readonly TimeSpan timeoutDefault;
-
-    public UnityBuildRunnerCommand(ILogger<UnityBuildRunnerCommand> logger)
-    {
-        this.logger = logger;
-        timeoutDefault = TimeSpan.Parse(DefaultTimeout);
-    }
+    private readonly TimeSpan timeoutDefault = TimeSpan.Parse(DefaultTimeout);
 
     [RootCommand]
     public async Task<int> Run([Option("--unity-path", "Full Path to the Unity executable, leave empty when use 'UnityPath' Environment variables instead.")] string unityPath = "", [Option("--timeout", "Timeout for Unity Build.")] string timeout = DefaultTimeout)
     {
         var arguments = Context.Arguments
-            .Except(new[] { "--timeout", timeout });
+            .Except(["--timeout", timeout]);
         if (!string.IsNullOrEmpty(unityPath))
         {
-            arguments = arguments.Except(new[] { "--unity-path", unityPath });
+            arguments = arguments.Except(["--unity-path", unityPath]);
         }
         var args = arguments?.ToArray();
 
-        if (args is null || !args.Any())
+        if (args is null || args.Length == 0)
         {
-            throw new ArgumentOutOfRangeException($"No valid argument found, exiting. You have specified arguments: {string.Join(" ", args ?? Array.Empty<string>())}");
+            throw new ArgumentOutOfRangeException($"No valid argument found, exiting. You have specified arguments: {string.Join(" ", args ?? [])}");
         }
 
         // build
