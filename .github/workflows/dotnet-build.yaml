@@ -23,7 +23,7 @@ jobs:
         uses: xt0rted/pull-request-comment-branch@v1
         id: comment-branch
         if: ${{ github.event_name == 'issue_comment' }}
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event_name == 'issue_comment' && steps.comment-branch.outputs.head_ref || ''}}
       - uses: guitarrapc/actions/.github/actions/setup-dotnet@main
