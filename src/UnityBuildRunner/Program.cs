@@ -32,7 +32,7 @@ public class UnityBuildRunnerCommand(ILogger<UnityBuildRunnerCommand> logger)
     /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     [Command("")]
-    public async Task<int> Run(CancellationToken cancellationToken, string unityPath = "", string timeout = DefaultTimeout, params string[] args)
+    public async Task<int> Run(CancellationToken cancellationToken, string unityPath = "", string timeout = DefaultTimeout, [Argument] params string[] args)
     {
         logger.LogInformation($$"""
             Arguments:
