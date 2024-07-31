@@ -87,7 +87,7 @@ public class DefaultSettingsTest : IDisposable
     public void ArgsumentStringShouldFormated(string[] args, string expected)
     {
         ISettings settings = DefaultSettings.Create(_unityPath, _timeout, args, default);
-        settings.ArgumentString.Should().Be(expected);
+        settings.GetArgumentString().Should().Be(expected);
     }
 
     [Theory]
@@ -102,7 +102,6 @@ public class DefaultSettingsTest : IDisposable
     }
 
     [Theory]
-    [InlineData("")]
     [InlineData("\"")]
     [InlineData("\"foo")]
     [InlineData("foo\"")]
@@ -112,15 +111,17 @@ public class DefaultSettingsTest : IDisposable
     [InlineData("\"f\"o\"o\"")]
     public void QuoteStringInvalidInput(string input)
     {
-        Assert.Throws<ArgumentException>(() => DefaultSettings.QuoteString(input));
+        ISettings settings = DefaultSettings.Create(_unityPath, TimeSpan.Zero, [input], default);
+        Assert.Throws<ArgumentException>(() => settings.GetArgumentString());
     }
 
     [Theory]
-    [InlineData("\"\"", "\"\"")]
-    [InlineData("\"foo\"", "\"foo\"")]
-    [InlineData("foo", "\"foo\"")]
+    [InlineData("\"\"", "\"\" -logFile \"unitybuild.log\"")]
+    [InlineData("\"foo\"", "\"foo\" -logFile \"unitybuild.log\"")]
+    [InlineData("foo", "\"foo\" -logFile \"unitybuild.log\"")]
     public void QuoteStringValidValue(string input, string expected)
     {
-        DefaultSettings.QuoteString(input).Should().Be(expected);
+        ISettings settings = DefaultSettings.Create(_unityPath, TimeSpan.Zero, [input], default);
+        settings.GetArgumentString().Should().Be(expected);
     }
 }

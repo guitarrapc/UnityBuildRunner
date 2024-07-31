@@ -32,7 +32,7 @@ internal static class BuildLogger
 
     public static void StartBuild(ISettings settings) => _logger!.Log(LogLevel.Information, EventIds.StartBuild, $$"""
             Starting Unity Build.
-              - Command:     {{settings.UnityPath}} {{settings.ArgumentString}}
+              - Command:     {{settings.UnityPath}} {{settings.GetArgumentString()}}
               - WorkingDir:  {{settings.WorkingDirectory}}
               - LogFilePath: {{settings.LogFilePath}}
               - Timeout:     {{settings.TimeOut}}

@@ -10,10 +10,6 @@ public interface ISettings
     /// </summary>
     string[] Args { get; init; }
     /// <summary>
-    /// Argument pass to Unity's executable.
-    /// </summary>
-    string ArgumentString { get; init; }
-    /// <summary>
     /// Unity executable's full path to execute.
     /// </summary>
     string UnityPath { get; init; }
@@ -32,12 +28,73 @@ public interface ISettings
     /// <summary>
     /// Cancellation Token Source. fire when timeout or Ctrl+C has triggered.
     /// </summary>
-    CancellationTokenSource Cts { get; init; }
+    CancellationTokenSource CancellationTokenSource { get; init; }
 
     /// <summary>
     /// Validate settings is correct.
     /// </summary>
     void Validate();
+
+    /// <summary>
+    /// Get string of Args
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    public string GetArgumentString()
+    {
+        // change `-foo value` -> `-foo "value"`
+        var quoteArgs = Args.Select(s => s.AsSpan()[0] == '-' ? s : QuoteString(s));
+        var argumentString = string.Join(" ", quoteArgs);
+        return argumentString;
+
+        static string QuoteString(string text)
+        {
+            var span = text.AsSpan();
+
+            // `` is invalid
+            if (span.Length == 0)
+            {
+                throw new ArgumentException($"Argument is empty and is not valid string to quote. input: {text}");
+            }
+
+            var firstChar = span[0];
+            var lastChar = span[^1];
+
+            // `"` is invalid
+            if (span.Length == 1 && firstChar == '"')
+            {
+                throw new ArgumentException($"Argument is \" and is not valid string to quote. input: {text}");
+            }
+
+            // `"foo` is invalid
+            if (span.Length >= 2 && firstChar == '"' && lastChar != '"')
+            {
+                throw new ArgumentException($"Argument begin with \" but not closed, please complete quote. input: {text}");
+            }
+
+            // `foo"` is invalid
+            if (span.Length >= 2 && firstChar != '"' && lastChar == '"')
+            {
+                throw new ArgumentException($"Argument end with \" but not begin with \", please complete quote. input: {text}");
+            }
+
+            // `foo"foo` or `foo"foo"foo` is invalid
+            if (span[1..^1].Contains('"'))
+            {
+                throw new ArgumentException($"Argument contains \", but is invalid. input: {text}");
+            }
+
+            // `""` and `"foo"` is valid
+            if (span.Length >= 2 && firstChar == '"' && lastChar == '"')
+            {
+                return text;
+            }
+
+            // `foo` is valid
+            return $"\"{text}\"";
+        }
+
+    }
 }
 
 /// <summary>
@@ -50,7 +107,7 @@ public interface ISettings
 /// <param name="WorkingDirectory"></param>
 /// <param name="TimeOut"></param>
 /// <param name="Cts"></param>
-public record DefaultSettings(string[] Args, string ArgumentString, string UnityPath, string LogFilePath, string WorkingDirectory, TimeSpan TimeOut, CancellationTokenSource Cts) : ISettings
+public record DefaultSettings(string[] Args, string UnityPath, string LogFilePath, string WorkingDirectory, TimeSpan TimeOut, CancellationTokenSource CancellationTokenSource) : ISettings
 {
     /// <summary>
     /// Validate Settings is correct.
@@ -98,9 +155,6 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
         var arguments = args
             .Where(x => !string.IsNullOrWhiteSpace(x)) // remove spaced element `["a", "b", "", "d"]` -> ["a", "b", "d"]
             .ToArray();
-        // change `-foo value` -> `-foo "value"`
-        var quoteArgs = arguments.Select(s => s.AsSpan()[0] == '-' ? s : QuoteString(s));
-        var argumentString = string.Join(" ", quoteArgs);
 
         // WorkingDirectory should be cli launch path
         var workingDirectory = Directory.GetCurrentDirectory();
@@ -110,63 +164,11 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
         var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutToken.Token);
 
         // Create settings
-        var settings = new DefaultSettings(arguments, argumentString, unityPath, logFilePath, workingDirectory, timeout, cts);
+        var settings = new DefaultSettings(arguments, unityPath, logFilePath, workingDirectory, timeout, cts);
 
         return settings;
     }
 
-    /// <summary>
-    /// QuoteString when possible.
-    /// </summary>
-    /// <param name="text"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentException"></exception>
-    internal static string QuoteString(string text)
-    {
-        var span = text.AsSpan();
-
-        // `` is invalid
-        if (span.Length == 0)
-        {
-            throw new ArgumentException($"Argument is empty and is not valid string to quote. input: {text}");
-        }
-
-        var firstChar = span[0];
-        var lastChar = span[^1];
-
-        // `"` is invalid
-        if (span.Length == 1 && firstChar == '"')
-        {
-            throw new ArgumentException($"Argument is \" and is not valid string to quote. input: {text}");
-        }
-
-        // `"foo` is invalid
-        if (span.Length >= 2 && firstChar == '"' && lastChar != '"')
-        {
-            throw new ArgumentException($"Argument begin with \" but not closed, please complete quote. input: {text}");
-        }
-
-        // `foo"` is invalid
-        if (span.Length >= 2 && firstChar != '"' && lastChar == '"')
-        {
-            throw new ArgumentException($"Argument end with \" but not begin with \", please complete quote. input: {text}");
-        }
-
-        // `foo"foo` or `foo"foo"foo` is invalid
-        if (span[1..^1].Contains('"'))
-        {
-            throw new ArgumentException($"Argument contains \", but is invalid. input: {text}");
-        }
-
-        // `""` and `"foo"` is valid
-        if (span.Length >= 2 && firstChar == '"' && lastChar == '"')
-        {
-            return text;
-        }
-
-        // `foo` is valid
-        return $"\"{text}\"";
-    }
 
     /// <summary>
     /// Parse `-logFile <logfile>` from arguments.

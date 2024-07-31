@@ -43,7 +43,7 @@ public class DefaultBuilder : IBuilder
 
     public async Task BuildAsync()
     {
-        var ct = settings.Cts.Token;
+        var ct = settings.CancellationTokenSource.Token;
 
         // Initialize
         BuildLogger.Initialize();
@@ -55,7 +55,7 @@ public class DefaultBuilder : IBuilder
         using var process = Process.Start(new ProcessStartInfo()
         {
             FileName = settings.UnityPath,
-            Arguments = settings.ArgumentString,
+            Arguments = settings.GetArgumentString(),
             WorkingDirectory = settings.WorkingDirectory,
             UseShellExecute = false,
             CreateNoWindow = true,
