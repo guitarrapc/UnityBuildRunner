@@ -41,22 +41,17 @@ public class UnityBuildRunnerCommand(ILogger<UnityBuildRunnerCommand> logger)
               --args={{string.Join(" ", args)}}
             """);
 
-        // validate
-        if (args.Length == 0)
+        // Build settings
+        if (string.IsNullOrWhiteSpace(unityPath))
         {
-            logger.LogError("--args parameter is missing. Please specify unity batch arguments.");
-            return 1;
-        }
-        var unityFullPath = !string.IsNullOrWhiteSpace(unityPath) ? unityPath : Environment.GetEnvironmentVariable(UnityPathEnvKey);
-        if (string.IsNullOrWhiteSpace(unityFullPath))
-        {
-            logger.LogError($"Unity Path not specified. Please specify by '--unity-path' or EnvVar '{UnityPathEnvKey}'.");
-            return 1;
+            logger.LogInformation($"--unity-path is empty, trying get value from {UnityPathEnvKey}");
+            unityPath = Environment.GetEnvironmentVariable(UnityPathEnvKey) ?? "";
         }
         var timeoutSpan = TimeSpan.TryParse(timeout, out var r) ? r : timeoutDefault;
+        var settings = DefaultSettings.Create(unityPath, timeoutSpan, args, cancellationToken);
+        settings.Validate();
 
-        // build
-        var settings = DefaultSettings.Create(args, unityPath, timeoutSpan, cancellationToken);
+        // Run Build
         var builder = new DefaultBuilder(settings, logger);
         await builder.BuildAsync();
 

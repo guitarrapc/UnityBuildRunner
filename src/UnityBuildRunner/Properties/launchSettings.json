@@ -8,32 +8,36 @@
       "commandName": "Project",
       "commandLineArgs": "--help"
     },
-    "UnityBuildRunner (unity-path)": {
+    "UnityBuildRunner (unity-path Mono2x)": {
       "commandName": "Project",
-      "commandLineArgs": "--unity-path \"C:/Program Files/Unity/Hub/Editor/2021.3.17f1/Editor/Unity.exe\" -quit -batchmode -nographics -silent-crashes -logfile log.log -buildTarget StandaloneWindows64 -projectPath ../../../../../sandbox/Sandbox.Unity -executeMethod BuildUnity.BuildGame"
+      "commandLineArgs": "--unity-path \"C:/Program Files/Unity/Hub/Editor/2022.3.39f1/Editor/Unity.exe\" -quit -batchmode -nographics -silent-crashes -logfile log.log -buildTarget StandaloneWindows64 -projectPath ../../../../../sandbox/Sandbox.Unity -executeMethod BuildUnity.BuildGame"
+    },
+    "UnityBuildRunner (unity-path IL2CPP)": {
+      "commandName": "Project",
+      "commandLineArgs": "--unity-path \"C:/Program Files/Unity/Hub/Editor/2022.3.39f1/Editor/Unity.exe\" -quit -batchmode -nographics -silent-crashes -logfile log.log -buildTarget StandaloneWindows64 -projectPath ../../../../../sandbox/Sandbox.Unity -executeMethod BuildUnity.BuildGame"
     },
     "UnityBuildRunner (env)": {
       "commandName": "Project",
       "commandLineArgs": "-quit -batchmode -nographics -silent-crashes -logfile log.log -buildTarget StandaloneWindows64 -projectPath ../../../../../sandbox/Sandbox.Unity -executeMethod BuildUnity.BuildGame",
       "environmentVariables": {
-        "UnityPath": "C:\\Program Files\\Unity\\Hub\\Editor\\2021.3.17f1\\Editor\\Unity.exe"
+        "UnityPath": "C:\\Program Files\\Unity\\Hub\\Editor\\2022.3.39f1\\Editor\\Unity.exe"
       }
     },
     "UnityBuildRunner (-logFile -)": {
       "commandName": "Project",
-      "commandLineArgs": "--unity-path \"C:/Program Files/Unity/Hub/Editor/2021.3.17f1/Editor/Unity.exe\" -quit -batchmode -nographics -silent-crashes -logfile - -buildTarget StandaloneWindows64 -projectPath ../../../../../sandbox/Sandbox.Unity -executeMethod BuildUnity.BuildGame"
+      "commandLineArgs": "--unity-path \"C:/Program Files/Unity/Hub/Editor/2022.3.39f1/Editor/Unity.exe\" -quit -batchmode -nographics -silent-crashes -logfile - -buildTarget StandaloneWindows64 -projectPath ../../../../../sandbox/Sandbox.Unity -executeMethod BuildUnity.BuildGame"
     },
     "UnityBuildRunner (quote-slash)": {
       "commandName": "Project",
-      "commandLineArgs": "--unity-path \"C:/Program Files/Unity/Hub/Editor/2021.3.17f1/Editor/Unity.exe\" -quit -batchmode -nographics -silent-crashes -logfile - -buildTarget StandaloneWindows64 -projectPath \"../../../../../sandbox/Sandbox.Unity/\" -executeMethod BuildUnity.BuildGame"
+      "commandLineArgs": "--unity-path \"C:/Program Files/Unity/Hub/Editor/2022.3.39f1/Editor/Unity.exe\" -quit -batchmode -nographics -silent-crashes -logfile - -buildTarget StandaloneWindows64 -projectPath \"../../../../../sandbox/Sandbox.Unity/\" -executeMethod BuildUnity.BuildGame"
     },
     "UnityBuildRunner (quote)": {
       "commandName": "Project",
-      "commandLineArgs": "--unity-path \"C:/Program Files/Unity/Hub/Editor/2021.3.17f1/Editor/Unity.exe\" -quit -batchmode -nographics -silent-crashes -logfile - -buildTarget StandaloneWindows64 -projectPath \"..\\..\\..\\..\\..\\sandbox/Sandbox.Unity\\\\\" -executeMethod BuildUnity.BuildGame"
+      "commandLineArgs": "--unity-path \"C:/Program Files/Unity/Hub/Editor/2022.3.39f1/Editor/Unity.exe\" -quit -batchmode -nographics -silent-crashes -logfile - -buildTarget StandaloneWindows64 -projectPath \"..\\..\\..\\..\\..\\sandbox/Sandbox.Unity\\\\\" -executeMethod BuildUnity.BuildGame"
     },
     "UnityBuildRunner (quote-bad)": {
       "commandName": "Project",
-      "commandLineArgs": "--unity-path \"C:/Program Files/Unity/Hub/Editor/2021.3.17f1/Editor/Unity.exe\" -quit -batchmode -nographics -silent-crashes -logfile - -buildTarget StandaloneWindows64 -projectPath \"..\\..\\..\\..\\..\\sandbox/Sandbox.Unity\\\" -executeMethod BuildUnity.BuildGame"
+      "commandLineArgs": "--unity-path \"C:/Program Files/Unity/Hub/Editor/2022.3.39f1/Editor/Unity.exe\" -quit -batchmode -nographics -silent-crashes -logfile - -buildTarget StandaloneWindows64 -projectPath \"..\\..\\..\\..\\..\\sandbox/Sandbox.Unity\\\" -executeMethod BuildUnity.BuildGame"
     }
   }
 }

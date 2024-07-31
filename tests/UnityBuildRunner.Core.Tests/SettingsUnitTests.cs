@@ -30,14 +30,21 @@ public class DefaultSettingsTest : IDisposable
     [Fact]
     public void UnityPathCanReadFromArguments()
     {
-        ISettings settings = DefaultSettings.Create([], _unityPath, _timeout, default);
+        ISettings settings = DefaultSettings.Create(_unityPath, _timeout, [], default);
         settings.UnityPath.Should().Be(_unityPath);
     }
 
     [Fact]
-    public void UnityPathMissingShouldThrow()
+    public void ValidateSettings()
     {
-        Assert.Throws<FileNotFoundException>(() => DefaultSettings.Create([], "", _timeout, default));
+        var argsEmpty = DefaultSettings.Create("", _timeout, [], default);
+        Assert.Throws<ArgumentException>(() => argsEmpty.Validate());
+
+        var unitypathEmpty = DefaultSettings.Create("", _timeout, [""], default);
+        Assert.Throws<ArgumentException>(() => unitypathEmpty.Validate());
+
+        var unitypathNotExists = DefaultSettings.Create("___fff___", _timeout, [""], default);
+        Assert.Throws<FileNotFoundException>(() => unitypathNotExists.Validate());
     }
 
     [Theory]
@@ -45,7 +52,7 @@ public class DefaultSettingsTest : IDisposable
     [InlineData(new[] { "-logfile", "hoge.log", "-bathmode", "-nographics", "-projectpath", "HogemogeProject", "-executeMethod", "MethodName", "-quite" }, "hoge.log")]
     public void ParseLogfile(string[] args, string logfile)
     {
-        ISettings settings = DefaultSettings.Create(args, _unityPath, _timeout, default);
+        ISettings settings = DefaultSettings.Create(_unityPath, _timeout, args, default);
         var log = DefaultSettings.ParseLogFile(args);
         log.Should().Be(logfile);
         settings.LogFilePath.Should().Be(logfile);
@@ -62,7 +69,7 @@ public class DefaultSettingsTest : IDisposable
     [InlineData(new[] { "-bathmode", "-nographics", "-projectpath", " ", @"foo\bar\baz\", "-executeMethod", "MethodName", "-quite" }, new[] { "-bathmode", "-nographics", "-projectpath", @"foo\bar\baz\", "-executeMethod", "MethodName", "-quite", "-logFile", "unitybuild.log" })]
     public void ArgsShouldNotContainNullOrWhiteSpace(string[] args, string[] expected)
     {
-        ISettings settings = DefaultSettings.Create(args, _unityPath, _timeout, default);
+        ISettings settings = DefaultSettings.Create(_unityPath, _timeout, args, default);
         settings.Args.SequenceEqual(expected).Should().BeTrue();
     }
 
@@ -79,7 +86,7 @@ public class DefaultSettingsTest : IDisposable
     [InlineData(new[] { "-logfile", "\"hoge.log\"", "-bathmode", "-nographics", "-projectpath", @"""foo\bar\baz""", "-executeMethod", "\"MethodName\"", "-quite" }, "-logfile \"hoge.log\" -bathmode -nographics -projectpath \"foo\\bar\\baz\" -executeMethod \"MethodName\" -quite")] // input is already quoted
     public void ArgsumentStringShouldFormated(string[] args, string expected)
     {
-        ISettings settings = DefaultSettings.Create(args, _unityPath, _timeout, default);
+        ISettings settings = DefaultSettings.Create(_unityPath, _timeout, args, default);
         settings.ArgumentString.Should().Be(expected);
     }
 

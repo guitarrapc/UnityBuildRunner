@@ -57,28 +57,40 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
     /// </summary>
     public void Validate()
     {
-        // validate
+        if (Args.Length == 0)
+        {
+            throw new ArgumentException($"Invalid {nameof(Args)}, Unity batch arguments is missing.");
+        }
+        if (string.IsNullOrWhiteSpace(UnityPath))
+        {
+            throw new ArgumentException($"Invalid {nameof(UnityPath)}, Unity path is missing.");
+        }
         if (!File.Exists(UnityPath))
         {
-            throw new FileNotFoundException($"Specified unity executable not found. path: {UnityPath}");
+            throw new FileNotFoundException($"Invalid {nameof(UnityPath)}, file not found.");
         }
     }
 
     /// <summary>
     /// Create Default settings <see cref="DefaultSettings"/>.
     /// </summary>
-    public static DefaultSettings Create(IReadOnlyList<string> args, string unityPath, TimeSpan timeout, CancellationToken cancellationToken)
+    public static DefaultSettings Create(string unityPath, TimeSpan timeout, IReadOnlyList<string> args, CancellationToken cancellationToken)
     {
-        // -logFile handling
+        // get logfilePath from argument
         var logFilePath = ParseLogFile(args);
+
+        // Add logfile to arguments if required
         if (!IsValidLogFileName(logFilePath))
         {
             const string defaultLogFileName = "unitybuild.log";
-            var inputLogFilePath = logFilePath;
+            const string logFileKey = "-logFile";
+            var tmpLogFilePath = logFilePath;
+            logFilePath = defaultLogFileName;
+
             // remove current `-logFile "-"` and replace to `-logFile unitybuild.log`
             var tmpArgs = string.IsNullOrEmpty(logFilePath)
-                ? args.Except(["-logFile"], StringComparer.OrdinalIgnoreCase).Concat(["-logFile", defaultLogFileName])
-                : args.Except(["-logFile"], StringComparer.OrdinalIgnoreCase).Except([inputLogFilePath]).Concat(["-logFile", defaultLogFileName]);
+                ? args.Except([logFileKey], StringComparer.OrdinalIgnoreCase).Concat([logFileKey, defaultLogFileName])
+                : args.Except([logFileKey], StringComparer.OrdinalIgnoreCase).Except([tmpLogFilePath]).Concat([logFileKey, defaultLogFileName]);
             args = tmpArgs.ToArray();
         }
 
@@ -99,9 +111,6 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
 
         // Create settings
         var settings = new DefaultSettings(arguments, argumentString, unityPath, logFilePath, workingDirectory, timeout, cts);
-
-        // Validate settings
-        settings.Validate();
 
         return settings;
     }
