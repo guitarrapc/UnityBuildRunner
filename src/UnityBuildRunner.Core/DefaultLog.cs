@@ -44,9 +44,9 @@ internal static class BuildLogger
 
     public static void StoppingBuildTimeoutExceeded(Exception ex, ISettings settings) => _logger!.Log(LogLevel.Critical, EventIds.StoppingBuildTimeoutExceeded, $"Stopping build. Timeout exceeded ({settings.TimeOut.TotalMinutes}min) {ex.Message}");
 
-    public static void StoppingBuildBuildError(BuildErrorFoundException ex) => _logger!.Log(LogLevel.Critical, EventIds.StoppingBuildBuildError, $"Stopping build. {ex.Message} stdout: '{ex.StdOut}'");
+    public static void StoppingBuildBuildError(UnityBuildRunnerBuildErrorFoundException ex) => _logger!.Log(LogLevel.Critical, EventIds.StoppingBuildBuildError, $"Stopping build. {ex.Message} stdout: '{ex.StdOut}'");
 
-    public static void StoppingBuildBuildLogNotFound(BuildLogNotFoundException ex) => _logger!.Log(LogLevel.Critical, EventIds.StoppingBuildBuildError, $"Stopping build. {ex.Message} logFile: '{ex.LogFilePath}', FullPath: '{ex.FullPath}'.");
+    public static void StoppingBuildBuildLogNotFound(UnityBuildRunnerLogNotFoundException ex) => _logger!.Log(LogLevel.Critical, EventIds.StoppingBuildBuildError, $"Stopping build. {ex.Message} logFile: '{ex.LogFilePath}', FullPath: '{ex.FullPath}'.");
     public static void StoppingBuildUnknown(Exception ex) => _logger!.Log(LogLevel.Critical, EventIds.StoppingBuildUnknown, $"Stopping build. Error happen while building Unity. {ex.Message}");
 
     public static void BuildSucceed(int unityProcessExitCode, BuildErrorCode runnerErrorCode, TimeSpan elapsed) => _logger!.Log(LogLevel.Information, EventIds.BuildSucceed, $$"""

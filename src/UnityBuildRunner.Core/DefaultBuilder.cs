@@ -87,7 +87,7 @@ public class DefaultBuilder : IBuilder
                 else
                 {
                     // No log file means build not started.
-                    throw new BuildLogNotFoundException($"Unity Process not created logfile. Hint: This might be log file permission issue or temporary failure. Re-run build and see reproduce or not.", settings.LogFilePath, Path.Combine(settings.WorkingDirectory, settings.LogFilePath));
+                    throw new UnityBuildRunnerLogNotFoundException($"Unity Process not created logfile. Hint: This might be log file permission issue or temporary failure. Re-run build and see reproduce or not.", settings.LogFilePath, Path.Combine(settings.WorkingDirectory, settings.LogFilePath));
                 }
             }
 
@@ -121,36 +121,36 @@ public class DefaultBuilder : IBuilder
                 buildErrorCode = BuildErrorCode.UnityProcessError;
             }
         }
-        catch (OperationCanceledException ex) when (process is null)
+        catch (Exception _) when (_ is OperationCanceledException ex && process is null)
         {
             // process could not create
             BuildLogger.StoppingBuildOperationCancel(ex);
             buildErrorCode = BuildErrorCode.ProcessNull;
         }
-        catch (OperationCanceledException ex) when (process.HasExited)
+        catch (Exception _) when (_ is OperationCanceledException ex && process.HasExited)
         {
             // process immediately finished
             BuildLogger.StoppingBuildOperationCancel(ex);
             buildErrorCode = BuildErrorCode.ProcessImmediatelyExit;
         }
-        catch (OperationCanceledException ex) when (sw.Elapsed.TotalMilliseconds > settings.TimeOut.TotalMilliseconds)
+        catch (Exception _) when (_ is OperationCanceledException ex && sw.Elapsed.TotalMilliseconds > settings.TimeOut.TotalMilliseconds)
         {
             // Timeout
             BuildLogger.StoppingBuildTimeoutExceeded(ex, settings);
             buildErrorCode = BuildErrorCode.ProcessTimeout;
         }
-        catch (OperationCanceledException ex)
+        catch (Exception _) when (_ is OperationCanceledException ex)
         {
             // User cancel or any cancellation detected
             BuildLogger.StoppingBuildOperationCancel(ex);
             buildErrorCode = BuildErrorCode.OperationCancelled;
         }
-        catch (BuildErrorFoundException ex)
+        catch (Exception _) when (_ is UnityBuildRunnerBuildErrorFoundException ex)
         {
             BuildLogger.StoppingBuildBuildError(ex);
             buildErrorCode = BuildErrorCode.BuildErrorMessageFound;
         }
-        catch (BuildLogNotFoundException ex)
+        catch (Exception _) when (_ is UnityBuildRunnerLogNotFoundException ex)
         {
             BuildLogger.StoppingBuildBuildLogNotFound(ex);
             buildErrorCode = BuildErrorCode.LogFileNotFound;
@@ -231,7 +231,7 @@ public class DefaultBuilder : IBuilder
     /// </summary>
     /// <param name="reader"></param>
     /// <param name="errorFilter"></param>
-    /// <exception cref="BuildErrorFoundException"></exception>
+    /// <exception cref="UnityBuildRunnerException"></exception>
     private static void ReadAndFilterLog(StreamReader reader, IErrorFilter errorFilter)
     {
         var txt = reader.ReadToEnd();
@@ -244,6 +244,6 @@ public class DefaultBuilder : IBuilder
         BuildLogger.BuildLog(txt);
 
         // Exception when error message found.
-        errorFilter.Filter(txt, result => throw new BuildErrorFoundException($"Error filter caught error.", result.MatchPattern, result.MatchPattern));
+        errorFilter.Filter(txt, result => throw new UnityBuildRunnerBuildErrorFoundException($"Error filter caught error.", result.MatchPattern, result.MatchPattern));
     }
 }

@@ -1,5 +1,11 @@
 namespace UnityBuildRunner.Core;
-internal class BuildErrorFoundException(string message, string stdout, string matchPattern) : Exception
+
+public class UnityBuildRunnerException(string message) : Exception
+{
+    public override string Message => message;
+}
+
+internal class UnityBuildRunnerBuildErrorFoundException(string message, string stdout, string matchPattern) : Exception
 {
     public override string Message => message;
     private readonly string message = message;
@@ -9,7 +15,7 @@ internal class BuildErrorFoundException(string message, string stdout, string ma
 }
 
 
-internal class BuildLogNotFoundException(string message, string logFilePath, string fullPath) : Exception
+internal class UnityBuildRunnerLogNotFoundException(string message, string logFilePath, string fullPath) : Exception
 {
     public override string Message => message;
     private readonly string message = message;
