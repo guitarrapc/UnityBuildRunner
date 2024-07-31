@@ -6,10 +6,10 @@ public class BuildUnityMenu
 {
     private static readonly string[] scenes = new[] { "Assets/Scenes/SampleScene.unity" };
 
-    [MenuItem("MyTools/Build Windows IL2CPP Player")]
+    [MenuItem("Build/Build Windows IL2CPP Player")]
     public static void BuildWindowsIl2cppPlayer()
     {
-        var path = "artifacts/WindowsPlayer/Build.il2cpp-player.exe";
+        var path = "bin/WindowsPlayer/Build.il2cpp-player.exe";
 
         var buildPlayerOptions = new BuildPlayerOptions();
 
@@ -31,10 +31,10 @@ public class BuildUnityMenu
         CleanupDontship(path);
     }
 
-    [MenuItem("MyTools/Build Windows IL2CPP DedicatedServer")]
+    [MenuItem("Build/Build Windows IL2CPP DedicatedServer")]
     public static void BuildWindowsIl2cppServer()
     {
-        var path = "artifacts/WindowsServer/Build.il2cpp-server.exe";
+        var path = "bin/WindowsServer/Build.il2cpp-server.exe";
 
         var buildPlayerOptions = new BuildPlayerOptions();
 
@@ -56,10 +56,10 @@ public class BuildUnityMenu
         CleanupDontship(path);
     }
 
-    [MenuItem("MyTools/Build Linux IL2CPP Player")]
+    [MenuItem("Build/Build Linux IL2CPP Player")]
     public static void BuildLinuxIl2cppPlayer()
     {
-        var path = "artifacts/LinuxPlayer/Build.il2cpp-player.x86_64";
+        var path = "bin/LinuxPlayer/Build.il2cpp-player.x86_64";
 
         var buildPlayerOptions = new BuildPlayerOptions();
 
@@ -81,10 +81,10 @@ public class BuildUnityMenu
         CleanupDontship(path);
     }
 
-    [MenuItem("MyTools/Build Linux IL2CPP DedicatedServer")]
+    [MenuItem("Build/Build Linux IL2CPP DedicatedServer")]
     public static void BuildLinuxIl2cppServer()
     {
-        var path = "artifacts/LinuxServer/Build.il2cpp-server.x86_64";
+        var path = "bin/LinuxServer/Build.il2cpp-server.x86_64";
 
         var buildPlayerOptions = new BuildPlayerOptions();
 
