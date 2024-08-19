@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="ConsoleAppFramework" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
   </ItemGroup>
 
 </Project>
