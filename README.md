@@ -37,17 +37,13 @@ Install-Package UnityBuildRunner.Core
 
 You can run installed tool via `UnityBuildRunner` (.NET Global Tool) or `dotnet UnityBuildRunner` (.NET Tool) command.
 
-```
+```sh
 $ UnityBuildRunner --help
-Usage: UnityBuildRunner [options...]
+Usage: run [options...]
 
 Options:
-  -unity-path, --unity-path <String>    Full Path to the Unity.exe (Leave empty when use 'UnityPath' Environment variables instead.) (Default: )
-  -timeout, --timeout <String>          Timeout to terminate execution within. default: "00:60:00" (Default: 02:00:00)
-
-Commands:
-  help       Display help.
-  version    Display version.
+  -unity-path, --unity-path <String>    Full Path to the Unity executable, leave empty when use 'UnityPath' Environment variables instead. (Default: )
+  -timeout, --timeout <String>          Timeout for Unity Build. (Default: 02:00:00)
 ```
 
 ## CLI (Basic)
@@ -58,31 +54,31 @@ All you need to do is pass unity's path as `-u UnityPath` and leave other argmen
 
 If you are running Unity batch build like this.
 
-  ```sh
-  $ "C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe" -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\git\MRTKSample\Unity" -logfile "log.log" -executeMethod "HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
-  ```
+```sh
+$ "C:/Program Files/Unity/Hub/Editor/6000.0.12f1/Editor/Unity.exe" -quit -batchmode -nographics -silent-crashes -logfile "log.log" -buildTarget "StandaloneWindows64" -projectPath "C:/github/UnityBuildRunner/sandbox/Sandbox.Unity" -executeMethod "BuildUnity.BuildGame"
+```
 
 Then, append `UnityBuildRunner --unity-path <UnityPath>` or `dotnet UnityBuildRunner --unity-path <UnityPath>` to existing command, that's all.
 
   ```sh
   # .NET Global Tool
-  $ UnityBuildRunner --unity-path "C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe" -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\git\MRTKSample\Unity" -logfile "log.log" -executeMethod "HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
+  $ UnityBuildRunner --unity-path "C:/Program Files/Unity/Hub/Editor/6000.0.12f1/Editor/Unity.exe" -quit -batchmode -nographics -silent-crashes -logfile "log.log" -buildTarget "StandaloneWindows64" -projectPath "C:/github/UnityBuildRunner/sandbox/Sandbox.Unity" -executeMethod "BuildUnity.BuildGame"
 
   # .NET Tool
-  $ dotnet UnityBuildRunner --unity-path "C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe" -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\git\MRTKSample\Unity" -logfile "log.log" -executeMethod "HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
+  $ dotnet UnityBuildRunner --unity-path "C:/Program Files/Unity/Hub/Editor/6000.0.12f1/Editor/Unity.exe" -quit -batchmode -nographics -silent-crashes -logfile "log.log" -buildTarget "StandaloneWindows64" -projectPath "C:/github/UnityBuildRunner/sandbox/Sandbox.Unity" -executeMethod "BuildUnity.BuildGame"
   ```
 
 > **Note**: Another way to specifying UnityPath is via Environment Variable `UnityPath`.
 
   ```sh
   # Environment Variables
-  $ set UnityPath=C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe
+  $ set UnityPath=C:/Program Files/Unity/Hub/Editor/6000.0.12f1/Editor/Unity.exe
 
   # .NET Global Tool
-  $ UnityBuildRunner -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\git\MRTKSample\Unity" -logfile "log.log" -executeMethod "HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
+  $ UnityBuildRunner -quit -batchmode -nographics -silent-crashes -logfile "log.log" -buildTarget "StandaloneWindows64" -projectPath "C:/github/UnityBuildRunner/sandbox/Sandbox.Unity" -executeMethod "BuildUnity.BuildGame"
 
   # .NET Tool
-  $ dotnet UnityBuildRunner -quit -batchmode -buildTarget "WindowsStoreApps" -projectPath "C:\git\MRTKSample\Unity" -logfile "log.log" -executeMethod "HoloToolkit.Unity.HoloToolkitCommands.BuildSLN"
+  $ dotnet UnityBuildRunner -quit -batchmode -nographics -silent-crashes -logfile "log.log" -buildTarget "StandaloneWindows64" -projectPath "C:/github/UnityBuildRunner/sandbox/Sandbox.Unity" -executeMethod "BuildUnity.BuildGame"
   ```
 
 ## Library (Basic)
@@ -91,7 +87,7 @@ You can use as Library as well. This is sample code to run Unity Build.
 
 ```csharp
 // Parse settings from argument
-var settings = DefaultSettings.Parse(args, @"C:\Program Files\Unity\Hub\Editor\2022.3.3f1\Editor\Unity.exe", TimeSpan.FromMinutes(30));
+var settings = DefaultSettings.Parse(args, @"C:/Program Files/Unity/Hub/Editor/6000.0.12f1/Editor/Unity.exe", TimeSpan.FromMinutes(30));
 using var cts = settings.CreateCancellationTokenSource();
 
 // Run build

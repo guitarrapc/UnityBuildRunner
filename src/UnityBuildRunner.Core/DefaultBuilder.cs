@@ -1,9 +1,5 @@
 using Microsoft.Extensions.Logging;
-using System;
 using System.Diagnostics;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace UnityBuildRunner.Core;
 
@@ -27,24 +23,14 @@ public interface IBuilder
 /// <summary>
 /// Default Unity builder
 /// </summary>
-public class DefaultBuilder : IBuilder
+public class DefaultBuilder(ISettings settings, ILogger logger, IErrorFilter errorFilter) : IBuilder
 {
-    private readonly ISettings settings;
-    private readonly ILogger logger;
-    private readonly IErrorFilter errorFilter;
     private BuildErrorCode buildErrorCode = BuildErrorCode.Success;
 
     public int ExitCode { get; private set; }
 
     public DefaultBuilder(ISettings settings, ILogger logger) : this(settings, logger, new DefaultErrorFilter())
     {
-    }
-
-    public DefaultBuilder(ISettings settings, ILogger logger, IErrorFilter errorFilter)
-    {
-        this.settings = settings;
-        this.logger = logger;
-        this.errorFilter = errorFilter;
     }
 
     public async Task BuildAsync(CancellationToken ct = default)
@@ -54,12 +40,14 @@ public class DefaultBuilder : IBuilder
         await InitializeAsync(settings.LogFilePath, ct).ConfigureAwait(false);
 
         // Build
-        logger.LogInformation("Starting Unity Build.");
-        logger.LogInformation($"  - Command:     {settings.UnityPath} {settings.ArgumentString}");
-        logger.LogInformation($"  - WorkingDir:  {settings.WorkingDirectory}");
-        logger.LogInformation($"  - LogFilePath: {settings.LogFilePath}");
-        logger.LogInformation($"  - Timeout:     {settings.TimeOut}");
-        var sw = Stopwatch.StartNew();
+        logger.LogInformation($$"""
+        Starting Unity Build.
+          - Command:     {{settings.UnityPath}} {{settings.ArgumentString}}
+          - WorkingDir:  {{settings.WorkingDirectory}}
+          - LogFilePath: {{settings.LogFilePath}}
+          - Timeout:     {{settings.TimeOut}}
+        """);
+        var ts = settings.TimeProvider.GetTimestamp();
         using var process = Process.Start(new ProcessStartInfo()
         {
             FileName = settings.UnityPath,
@@ -86,14 +74,14 @@ public class DefaultBuilder : IBuilder
                 if (File.Exists(settings.LogFilePath)) break;
 
                 // Log waiting message.
-                if (sw.Elapsed.TotalSeconds > 10 && !waitingLongTime)
+                if (settings.TimeProvider.GetElapsedTime(ts).TotalSeconds > 10 && !waitingLongTime)
                 {
                     waitingLongTime = true;
                     logger.LogWarning("Waiting Unity creates log file takes long time, still waiting.");
                 }
 
                 // Some large repository's first Unity launch takes huge wait time until log file generated. However waiting more than 5min would be too slow and unnatural.
-                if (sw.Elapsed.TotalMinutes <= 5)
+                if (settings.TimeProvider.GetElapsedTime(ts).TotalMinutes <= 5)
                 {
                     await Task.Delay(TimeSpan.FromMilliseconds(100), ct).ConfigureAwait(false);
                 }
@@ -146,7 +134,7 @@ public class DefaultBuilder : IBuilder
             logger.LogInformation($"Stopping build. {ex.Message}");
             buildErrorCode = BuildErrorCode.ProcessImmediatelyExit;
         }
-        catch (OperationCanceledException) when (sw.Elapsed.TotalMilliseconds > settings.TimeOut.TotalMilliseconds)
+        catch (OperationCanceledException) when (settings.TimeProvider.GetElapsedTime(ts).TotalMilliseconds > settings.TimeOut.TotalMilliseconds)
         {
             // Timeout
             logger.LogInformation($"Stopping build. Timeout exceeded, {settings.TimeOut.TotalMinutes}min has been passed.");
@@ -175,8 +163,6 @@ public class DefaultBuilder : IBuilder
         }
         finally
         {
-            sw.Stop();
-
             if (buildErrorCode is BuildErrorCode.Success)
             {
                 logger.LogInformation($"Unity Build successfully complete.");
@@ -185,7 +171,7 @@ public class DefaultBuilder : IBuilder
             {
                 logger.LogInformation($"Unity Build failed, error code '{buildErrorCode}'.");
             }
-            logger.LogInformation($"Build Elapsed Time {sw.Elapsed}");
+            logger.LogInformation($"Build Elapsed Time {settings.TimeProvider.GetElapsedTime(ts)}");
 
             // Unity's exit code 0 is not mean no error. Therefore, when Unity exitcode was 0 and UnityBuildRunner caught any exception, replace exitcode with custom error.
             ExitCode = unityProcessExitCode == 0 ? buildErrorCode.GetAttrubute<ErrorExitCodeAttribute>()?.ExitCode ?? unityProcessExitCode : unityProcessExitCode;

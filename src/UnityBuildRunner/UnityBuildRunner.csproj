@@ -11,11 +11,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\UnityBuildRunner.Core\UnityBuildRunner.Core.csproj" />
+    <PackageReference Include="ConsoleAppFramework" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ConsoleAppFramework" />
+    <ProjectReference Include="..\UnityBuildRunner.Core\UnityBuildRunner.Core.csproj" />
   </ItemGroup>
 
 </Project>

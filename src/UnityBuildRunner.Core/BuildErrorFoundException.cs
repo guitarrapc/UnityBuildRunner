@@ -1,5 +1,3 @@
-using System;
-
 namespace UnityBuildRunner.Core;
 internal class BuildErrorFoundException : Exception
 {

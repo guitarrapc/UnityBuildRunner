@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Linq;
-using System.Threading;
 
 namespace UnityBuildRunner.Core;
 
@@ -41,6 +36,10 @@ public interface ISettings
     /// UnityBuild timeout
     /// </summary>
     TimeSpan TimeOut { get; init; }
+    /// <summary>
+    /// Default Timeprovider to use
+    /// </summary>
+    TimeProvider TimeProvider { get; init; }
 
     /// <summary>
     /// Create CancelltaionTokenSource from <see cref="ISettings"/>.
@@ -59,7 +58,7 @@ public interface ISettings
 /// <param name="LogFilePath"></param>
 /// <param name="WorkingDirectory"></param>
 /// <param name="TimeOut"></param>
-public record DefaultSettings(string[] Args, string ArgumentString, string UnityPath, string LogFilePath, string WorkingDirectory, TimeSpan TimeOut) : ISettings
+public record DefaultSettings(string[] Args, string ArgumentString, string UnityPath, string LogFilePath, string WorkingDirectory, TimeSpan TimeOut, TimeProvider TimeProvider) : ISettings
 {
     /// <summary>
     /// Validate Settings is correct.
@@ -134,7 +133,7 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
         var workingDirectory = Directory.GetCurrentDirectory();
 
         // Create settings
-        var settings = new DefaultSettings(arguments, argumentString, unityPathFixed, logFilePath, workingDirectory, timeout);
+        var settings = new DefaultSettings(arguments, argumentString, unityPathFixed, logFilePath, workingDirectory, timeout, TimeProvider.System);
 
         // Validate settings
         settings.Validate();
