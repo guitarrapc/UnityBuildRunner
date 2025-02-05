@@ -1,7 +1,3 @@
-using FluentAssertions;
-using System.Collections.Generic;
-using Xunit;
-
 namespace UnityBuildRunner.Core.Tests;
 
 public class DefaultErrorFilterTest
@@ -26,14 +22,14 @@ public class DefaultErrorFilterTest
         DisplayProgressbar: Unity license")]
     public void DetectCSharpCompileError(params string[] inputs)
     {
-        IErrorFilter errorFilter = new DefaultErrorFilter();
+        var errorFilter = new DefaultErrorFilter();
         var results = new List<string>();
         foreach (var input in inputs)
         {
             errorFilter.Filter(input, result => results.Add(result.MatchPattern));
         }
 
-        results.Should().NotBeEmpty();
+        Assert.NotEmpty(results);
     }
 
     [Theory]
@@ -41,13 +37,13 @@ public class DefaultErrorFilterTest
     [InlineData("Unity has not been activated")]
     public void DetectUnityError(params string[] inputs)
     {
-        IErrorFilter errorFilter = new DefaultErrorFilter();
+        var errorFilter = new DefaultErrorFilter();
         var results = new List<string>();
         foreach (var input in inputs)
         {
             errorFilter.Filter(input, result => results.Add(result.MatchPattern));
         }
-        results.Should().NotBeEmpty();
+        Assert.NotEmpty(results);
     }
 
     [Theory]
@@ -67,13 +63,13 @@ public class DefaultErrorFilterTest
         "Shader error in 'Shader Graphs/UrpFoo': Compilation failed (other error) 'out of memory during compilation")]
     public void SkipShaderError(params string[] inputs)
     {
-        IErrorFilter errorFilter = new DefaultErrorFilter();
+        var errorFilter = new DefaultErrorFilter();
         var results = new List<string>();
         foreach (var input in inputs)
         {
             errorFilter.Filter(input, result => results.Add(result.MatchPattern));
         }
-        results.Should().BeEmpty();
+        Assert.Empty(results);
     }
 
     [Theory]
@@ -82,12 +78,12 @@ public class DefaultErrorFilterTest
         "System memory in use before: 63.0 MB.", "DisplayProgressbar: Unity Package Manager")]
     public void SkipNormalMessage(params string[] inputs)
     {
-        IErrorFilter errorFilter = new DefaultErrorFilter();
+        var errorFilter = new DefaultErrorFilter();
         var results = new List<string>();
         foreach (var input in inputs)
         {
             errorFilter.Filter(input, result => results.Add(result.MatchPattern));
         }
-        results.Should().BeEmpty();
+        Assert.Empty(results);
     }
 }
