@@ -91,7 +91,7 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
     /// <summary>
     /// Parse args and create <see cref="DefaultSettings"/>.
     /// </summary>
-    public static bool TryParse(IReadOnlyList<string> args, string unityPath, TimeSpan timeout, [NotNullWhen(true)] out DefaultSettings? settings)
+    public static bool TryParse(ReadOnlySpan<string> args, string unityPath, TimeSpan timeout, [NotNullWhen(true)] out DefaultSettings? settings)
     {
         try
         {
@@ -108,38 +108,54 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
     /// <summary>
     /// Parse args and create <see cref="DefaultSettings"/>.
     /// </summary>
-    public static DefaultSettings Parse(IReadOnlyList<string> args, string unityPath, TimeSpan timeout)
+    public static DefaultSettings Parse(ReadOnlySpan<string> args, string unityPath, TimeSpan timeout)
     {
         // Unity Path
-        var unityPathFixed = !string.IsNullOrWhiteSpace(unityPath) ? unityPath : Environment.GetEnvironmentVariable(ISettings.UNITY_PATH_ENVVAR_KEY) ?? throw new ArgumentNullException($"Unity Path not specified. Please pass Unity Executable path with argument '--unity-path' or environment variable '{ISettings.UNITY_PATH_ENVVAR_KEY}'.");
+        var unityPathFixed = !string.IsNullOrWhiteSpace(unityPath)
+            ? unityPath
+            : Environment.GetEnvironmentVariable(ISettings.UNITY_PATH_ENVVAR_KEY) ?? throw new ArgumentNullException($"Unity Path not specified. Please pass Unity Executable path with argument '--unity-path' or environment variable '{ISettings.UNITY_PATH_ENVVAR_KEY}'.");
 
         // parse and fallback logfilePath
+        var arguments = args.ToArray().ToList(); // muda of muda
         var logFilePath = ParseLogFile(args);
         if (!IsValidLogFileName(logFilePath))
         {
             var inputLogFilePath = logFilePath;
             logFilePath = "unitybuild.log";
+
             // remove current `-logFile "-"` and replace to `-logFile unitybuild.log`
-            var tmpArgs = string.IsNullOrEmpty(logFilePath)
-                ? args.Except(new[] { "-logFile" }, StringComparer.OrdinalIgnoreCase).Concat(new[] { "-logFile", logFilePath })
-                : args.Except(new[] { "-logFile" }, StringComparer.OrdinalIgnoreCase).Except(new[] { inputLogFilePath }).Concat(new[] { "-logFile", logFilePath });
-            args = tmpArgs.ToArray();
+            RemoveArgument(arguments, "-logFile");
+            RemoveArgument(arguments, inputLogFilePath);
+
+            // add new logFile argument
+            arguments.Add("-logFile");
+            arguments.Add(logFilePath);
         }
 
-        var arguments = args.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
-        var argumentString = string.Join(" ", arguments.Select(s => s.AsSpan()[0] == '-' ? s : QuoteString(s)));
+        var noEmptyArray = arguments.Where(x => !string.IsNullOrWhiteSpace(x));
+        var argumentString = string.Join(" ", noEmptyArray.Select(s => s.AsSpan()[0] == '-' ? s : QuoteString(s)));
 
         // WorkingDirectory should be cli launch path.
         var workingDirectory = Directory.GetCurrentDirectory();
 
         // Create settings
-        var settings = new DefaultSettings(arguments, argumentString, unityPathFixed, logFilePath, workingDirectory, timeout, TimeProvider.System);
+        var settings = new DefaultSettings([.. noEmptyArray], argumentString, unityPathFixed, logFilePath, workingDirectory, timeout, TimeProvider.System);
 
         // Validate settings
         settings.Validate();
 
         return settings;
     }
+
+    private static void RemoveArgument(List<string> args, string argument)
+    {
+        var index = args.FindIndex(x => string.Equals(x, argument, StringComparison.OrdinalIgnoreCase));
+        if (index >= 0)
+        {
+            args.RemoveAt(index);
+        }
+    }
+
 
     /// <summary>
     /// QuoteString when possible.
@@ -196,12 +212,12 @@ public record DefaultSettings(string[] Args, string ArgumentString, string Unity
     /// </summary>
     /// <param name="args"></param>
     /// <returns></returns>
-    internal static string ParseLogFile(IReadOnlyList<string> args)
+    internal static string ParseLogFile(ReadOnlySpan<string> args)
     {
         var logFile = "";
-        for (var i = 0; i < args.Count; i++)
+        for (var i = 0; i < args.Length; i++)
         {
-            if (string.Equals(args[i], "-logFile", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Count)
+            if (string.Equals(args[i], "-logFile", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
             {
                 logFile = args[i + 1];
                 break;
