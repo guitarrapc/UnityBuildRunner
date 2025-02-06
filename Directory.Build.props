@@ -1,6 +1,7 @@
 <Project>
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>Latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- Set this to true to enable faster builds in Visual Studio. https://github.com/dotnet/project-system/blob/main/docs/build-acceleration.md -->

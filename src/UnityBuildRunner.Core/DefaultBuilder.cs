@@ -55,13 +55,7 @@ public class DefaultBuilder(ISettings settings, ILogger logger, IErrorFilter err
             WorkingDirectory = settings.WorkingDirectory,
             UseShellExecute = false,
             CreateNoWindow = true,
-        });
-
-        if (process is null)
-        {
-            throw new OperationCanceledException("Could not start Unity. Somthing blocked creating process.");
-        }
-
+        }) ?? throw new OperationCanceledException("Could not start Unity. Somthing blocked creating process.");
         var unityProcessExitCode = 0;
         try
         {
