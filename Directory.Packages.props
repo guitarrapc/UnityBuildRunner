@@ -4,7 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="ConsoleAppFramework" Version="5.4.1" />
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="9.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="9.0.3" />
     <!-- Tests -->
     <PackageVersion Include="GitHubActionsTestLogger" Version="2.4.1" />
     <PackageVersion Include="coverlet.msbuild" Version="6.0.4" />
