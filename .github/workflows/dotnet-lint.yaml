@@ -7,4 +7,7 @@ on:
 
 jobs:
   lint_csharp:
+    permissions:
+      contents: write
+      pull-requests: write
     uses: guitarrapc/actions/.github/workflows/reusable-dotnet-lint.yaml@main
