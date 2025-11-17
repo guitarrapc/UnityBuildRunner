@@ -1,4 +1,5 @@
 namespace UnityBuildRunner.Core;
+
 internal class BuildErrorFoundException : Exception
 {
     public override string Message => message;
