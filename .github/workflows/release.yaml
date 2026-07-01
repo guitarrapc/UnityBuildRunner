@@ -20,9 +20,9 @@ jobs:
           persist-credentials: false
       - uses: guitarrapc/actions/.github/actions/setup-dotnet@main
       # build
-      - run: dotnet build -c ${{ env.BUILD_CONFIG }} -p:Version=${{ github.event.ref }}
+      - run: dotnet build -c ${BUILD_CONFIG} -p:Version=${{ github.event.ref }}
       # pack
-      - run: dotnet pack -c ${{ env.BUILD_CONFIG }} -p:Version=${{ github.event.ref }} -o ./pack
+      - run: dotnet pack -c ${BUILD_CONFIG} -p:Version=${{ github.event.ref }} -o ./pack
       - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: nuget
@@ -48,4 +48,6 @@ jobs:
           prerelease: false
       - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
       # upload nuget
-      - run: dotnet nuget push "./nuget/*.nupkg" --skip-duplicate -s https://www.nuget.org/api/v2/package -k ${{ secrets.SYNCED_NUGET_KEY }}
+      - run: dotnet nuget push "./nuget/*.nupkg" --skip-duplicate -s https://www.nuget.org/api/v2/package -k ${SYNCED_NUGET_KEY}
+        env:
+          SYNCED_NUGET_KEY: ${{ secrets.SYNCED_NUGET_KEY }}

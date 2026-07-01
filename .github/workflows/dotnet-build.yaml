@@ -31,6 +31,6 @@ jobs:
           persist-credentials: false
       - uses: guitarrapc/actions/.github/actions/setup-dotnet@main
       - name: Build
-        run: dotnet build -c ${{ env.BUILD_CONFIG }}
+        run: dotnet build -c ${BUILD_CONFIG}
       - name: Test
-        run: dotnet test --no-build -c ${{ env.BUILD_CONFIG }} --logger GitHubActions --logger "console;verbosity=normal"
+        run: dotnet test --no-build -c ${BUILD_CONFIG} --logger GitHubActions --logger "console;verbosity=normal"
