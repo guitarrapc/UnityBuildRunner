@@ -29,7 +29,7 @@ jobs:
         with:
           ref: ${{ github.event_name == 'issue_comment' && steps.comment-branch.outputs.head_ref || ''}}
           persist-credentials: false
-      - uses: guitarrapc/actions/.github/actions/setup-dotnet@9122a18b0dea07585a242b9eb6ed7886f8587c49 # v1.0.1
+      - uses: guitarrapc/actions/.github/actions/setup-dotnet@758ef555e15e5d390a495fee02a8e31ec8141293 # v1.1.0
       - name: Build
         run: dotnet build -c ${BUILD_CONFIG}
       - name: Test
